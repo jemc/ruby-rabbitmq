@@ -5,6 +5,14 @@ require 'spec_helper'
 describe RabbitMQ::Connection do
   let(:subject_class) { RabbitMQ::Connection }
   
+  describe "destroy" do
+    it "can be called several times to no additional effect" do
+      subject.destroy
+      subject.destroy
+      subject.destroy
+    end
+  end
+  
   describe "when given no URL" do
     subject { subject_class.new }
     
