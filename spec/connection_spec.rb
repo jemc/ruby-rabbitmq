@@ -6,6 +6,10 @@ describe RabbitMQ::Connection do
   let(:subject_class) { RabbitMQ::Connection }
   
   describe "destroy" do
+    it "is not necessary to call" do
+      subject
+    end
+    
     it "can be called several times to no additional effect" do
       subject.destroy
       subject.destroy
