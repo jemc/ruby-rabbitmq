@@ -1,0 +1,4 @@
+
+class RabbitMQ::Connection
+  
+end
