@@ -744,6 +744,16 @@ module RabbitMQ
       attach_function :amqp_socket_get_sockfd,       [:pointer],                          :int,     **opts
       attach_function :amqp_get_socket,              [ConnectionState],                   :pointer, **opts
       attach_function :amqp_get_server_properties,   [ConnectionState],                   Table,    **opts
+      
+      attach_function :amqp_tcp_socket_new,        [ConnectionState], :pointer, **opts
+      attach_function :amqp_tcp_socket_set_sockfd, [:pointer, :int],  :void,    **opts
+      
+      attach_function :amqp_ssl_socket_new,             [ConnectionState],                      :pointer, **opts
+      attach_function :amqp_ssl_socket_set_cacert,      [:pointer, :string],                    :int,     **opts
+      attach_function :amqp_ssl_socket_set_key,         [:pointer, :string, :string],           :int,     **opts
+      attach_function :amqp_ssl_socket_set_key_buffer,  [:pointer, :string, :pointer, :size_t], :int,     **opts
+      attach_function :amqp_ssl_socket_set_verify,      [:pointer, Boolean],                    :void,    **opts
+      attach_function :amqp_set_initialize_ssl_library, [Boolean],                              :void,    **opts
     end
   end
 end
