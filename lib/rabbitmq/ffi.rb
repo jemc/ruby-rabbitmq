@@ -738,7 +738,7 @@ module RabbitMQ
       end
       
       attach_function :amqp_default_connection_info, [:pointer],                          :void,    **opts
-      attach_function :amqp_parse_url,               [:string, :pointer],                 :int,     **opts
+      attach_function :amqp_parse_url,               [:pointer, :pointer],                :int,     **opts
       attach_function :amqp_socket_open,             [:pointer, :string, :int],           :int,     **opts
       attach_function :amqp_socket_open_noblock,     [:pointer, :string, :int, :pointer], :int,     **opts
       attach_function :amqp_socket_get_sockfd,       [:pointer],                          :int,     **opts
