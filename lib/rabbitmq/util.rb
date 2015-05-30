@@ -4,10 +4,19 @@ class RabbitMQ::FFI::Error < RuntimeError; end
 module RabbitMQ::Util
   class << self
     
-    def error_check rc=nil
-      rc ||= yield
+    def raise_error! message="unspecified error", action=nil
+      message = "while #{action} - #{message}" if action
+      raise RabbitMQ::FFI::Error, message
+    end
+    
+    def error_check rc, action=nil
       return if rc == 0
-      raise RabbitMQ::FFI::Error, RabbitMQ::FFI.amqp_error_string2(rc)
+      raise_error! RabbitMQ::FFI.amqp_error_string2(rc), action
+    end
+    
+    def null_check obj, action=nil
+      return unless obj.nil?
+      raise_error! "got unexpected null", action
     end
     
     def mem_ptr size, count: 1, clear: true, release: true
@@ -20,7 +29,6 @@ module RabbitMQ::Util
       type = ::FFI::TypeDefs[type] if type.is_a?(Symbol)
       mem_ptr(type.size, clear: false, **kwargs)
     end
-    
     
     def strdup_ptr str, **kwargs
       str = str + "\x00"
