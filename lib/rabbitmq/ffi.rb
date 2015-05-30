@@ -33,7 +33,13 @@ module RabbitMQ
       attach_function :amqp_version_number, [], :uint32, **opts
       attach_function :amqp_version,        [], :string, **opts
       
-      Boolean      = :int
+      class Boolean
+        extend ::FFI::DataConverter
+        native_type ::FFI::TypeDefs[:int]
+        def self.to_native val, ctx;   val ? 1 : 0; end
+        def self.from_native val, ctx; val != 0;    end
+      end
+      
       MethodNumber = :uint32
       Flags        = :uint32
       Channel      = :uint16
