@@ -9,12 +9,12 @@ module RabbitMQ::Util
       raise RabbitMQ::FFI::Error, message.to_s
     end
     
-    def error_check rc, action=nil
+    def error_check action, rc
       return if rc == 0
       raise_error! RabbitMQ::FFI.amqp_error_string2(rc), action
     end
     
-    def null_check obj, action=nil
+    def null_check action, obj
       return unless obj.nil?
       raise_error! "got unexpected null", action
     end

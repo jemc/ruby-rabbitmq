@@ -45,7 +45,8 @@ module RabbitMQ
       
       if url
         url_ptr = Util.strdup_ptr(url)
-        Util.error_check FFI.amqp_parse_url(url_ptr, info.pointer)
+        Util.error_check :"parsing connection URL",
+          FFI.amqp_parse_url(url_ptr, info.pointer)
         
         # We must copy ConnectionInfo before the url_ptr is freed.
         @info = info.to_h
@@ -61,8 +62,9 @@ module RabbitMQ
       raise NotImplementedError if ssl?
       
       socket = FFI.amqp_tcp_socket_new(@ptr)
-      Util.null_check socket, :"creating a socket"
-      Util.error_check FFI.amqp_socket_open(socket, host, port), :"opening a socket"
+      Util.null_check :"creating a socket", socket
+      Util.error_check :"opening a socket",
+        FFI.amqp_socket_open(socket, host, port)
     end
     
     private def login!
@@ -75,7 +77,7 @@ module RabbitMQ
     
     private def rpc_check action, res
       case res[:reply_type]
-      when :library_exception; Util.error_check res[:library_error], action
+      when :library_exception; Util.error_check action, res[:library_error]
       when :server_exception;  raise NotImplementedError
       else res
       end
