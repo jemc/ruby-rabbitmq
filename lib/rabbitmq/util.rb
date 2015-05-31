@@ -6,7 +6,7 @@ module RabbitMQ::Util
     
     def raise_error! message="unspecified error", action=nil
       message = "while #{action} - #{message}" if action
-      raise RabbitMQ::FFI::Error, message
+      raise RabbitMQ::FFI::Error, message.to_s
     end
     
     def error_check rc, action=nil
