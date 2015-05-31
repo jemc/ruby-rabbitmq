@@ -33,6 +33,11 @@ module RabbitMQ
       attach_function :amqp_version_number, [], :uint32, **opts
       attach_function :amqp_version,        [], :string, **opts
       
+      class Timeval < ::FFI::Struct
+        layout :tv_sec,  :time_t,
+               :tv_usec, :suseconds_t
+      end
+      
       class Boolean
         extend ::FFI::DataConverter
         native_type ::FFI::TypeDefs[:int]
@@ -745,7 +750,7 @@ module RabbitMQ
       attach_function :amqp_send_header,               [ConnectionState],                                  :int,    **opts
       attach_function :amqp_frames_enqueued,           [ConnectionState],                                  Boolean, **opts
       attach_function :amqp_simple_wait_frame,         [ConnectionState, :pointer],                        :int,    **opts
-      attach_function :amqp_simple_wait_frame_noblock, [ConnectionState, :pointer, :pointer],              :int,    **opts
+      attach_function :amqp_simple_wait_frame_noblock, [ConnectionState, :pointer, Timeval.ptr],           :int,    **opts
       attach_function :amqp_simple_wait_method,        [ConnectionState, Channel, MethodNumber, :pointer], :int,    **opts
       attach_function :amqp_send_method,               [ConnectionState, Channel, MethodNumber, :pointer], :int,    **opts
       
@@ -791,8 +796,8 @@ module RabbitMQ
                :message,      Message
       end
       
-      attach_function :amqp_consume_message,  [ConnectionState, :pointer, :pointer, :int], RpcReply.by_value, **opts
-      attach_function :amqp_destroy_envelope, [:pointer],                                  :void,             **opts
+      attach_function :amqp_consume_message,  [ConnectionState, :pointer, Timeval.ptr, :int], RpcReply.by_value, **opts
+      attach_function :amqp_destroy_envelope, [:pointer],                                     :void,             **opts
       
       class ConnectionInfo < ::FFI::Struct
         layout :user,     :string,
@@ -803,13 +808,13 @@ module RabbitMQ
                :ssl,      Boolean
       end
       
-      attach_function :amqp_default_connection_info, [:pointer],                          :void,    **opts
-      attach_function :amqp_parse_url,               [:pointer, :pointer],                :int,     **opts
-      attach_function :amqp_socket_open,             [:pointer, :string, :int],           :int,     **opts
-      attach_function :amqp_socket_open_noblock,     [:pointer, :string, :int, :pointer], :int,     **opts
-      attach_function :amqp_socket_get_sockfd,       [:pointer],                          :int,     **opts
-      attach_function :amqp_get_socket,              [ConnectionState],                   :pointer, **opts
-      attach_function :amqp_get_server_properties,   [ConnectionState],                   Table,    **opts
+      attach_function :amqp_default_connection_info, [:pointer],                             :void,    **opts
+      attach_function :amqp_parse_url,               [:pointer, :pointer],                   :int,     **opts
+      attach_function :amqp_socket_open,             [:pointer, :string, :int],              :int,     **opts
+      attach_function :amqp_socket_open_noblock,     [:pointer, :string, :int, Timeval.ptr], :int,     **opts
+      attach_function :amqp_socket_get_sockfd,       [:pointer],                             :int,     **opts
+      attach_function :amqp_get_socket,              [ConnectionState],                      :pointer, **opts
+      attach_function :amqp_get_server_properties,   [ConnectionState],                      Table,    **opts
       
       attach_function :amqp_tcp_socket_new,        [ConnectionState], :pointer, **opts
       attach_function :amqp_tcp_socket_set_sockfd, [:pointer, :int],  :void,    **opts
