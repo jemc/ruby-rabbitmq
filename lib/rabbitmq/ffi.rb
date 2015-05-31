@@ -12,7 +12,7 @@ module RabbitMQ
     
     begin
       lib_name = 'librabbitmq'
-      lib_paths = ['/usr/local/lib', '/opt/local/lib', '/usr/lib64']
+      lib_paths = ['/usr/local/lib', '/opt/local/lib', '/usr/lib64', '/usr/local/lib64']
         .map { |path| "#{path}/#{lib_name}.#{::FFI::Platform::LIBSUFFIX}" }
       ffi_lib lib_paths + [lib_name]
       @available = true
