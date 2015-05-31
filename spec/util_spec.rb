@@ -6,13 +6,13 @@ describe RabbitMQ::Util do
   it { should be }
   
   describe "error_check" do
-    it "returns nil when given a zero result code" do
-      subject.error_check(:foo, 0).should eq nil
+    it "returns nil when given an ok result code" do
+      subject.error_check(:foo, :ok).should eq nil
     end
     
-    it "raises an error when given a nonzero result code" do
-      expect { subject.error_check(:foo, -1) }.to \
-        raise_error RabbitMQ::FFI::Error, /foo/
+    it "raises an error when given an error result code" do
+      expect { subject.error_check(:foo, :no_memory) }.to \
+        raise_error RabbitMQ::FFI::Error::NoMemory, /foo/
     end
   end
   

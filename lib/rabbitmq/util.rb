@@ -4,19 +4,14 @@ class RabbitMQ::FFI::Error < RuntimeError; end
 module RabbitMQ::Util
   class << self
     
-    def raise_error! message="unspecified error", action=nil
-      message = "while #{action} - #{message}" if action
-      raise RabbitMQ::FFI::Error, message.to_s
-    end
-    
-    def error_check action, rc
-      return if rc == 0
-      raise_error! RabbitMQ::FFI.amqp_error_string2(rc), action
+    def error_check action, status
+      return if status == :ok
+      raise RabbitMQ::FFI::Error.lookup(status), "while #{action}"
     end
     
     def null_check action, obj
       return unless obj.nil?
-      raise_error! "got unexpected null", action
+      raise RabbitMQ::FFI::Error, "while #{action} - got unexpected null"
     end
     
     def mem_ptr size, count: 1, clear: true, release: true
