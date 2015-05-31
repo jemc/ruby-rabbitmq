@@ -35,7 +35,7 @@ module RabbitMQ
       end
       
       def to_value
-        kind  = FFI::FieldValueKindEnum.find(self[:kind])
+        kind  = self[:kind]
         value = self[:value][value_member(kind)]
         case kind
         when :bytes;     value.to_s

@@ -135,35 +135,7 @@ module RabbitMQ
                :entries,     :pointer
       end
       
-      class FieldValueValue < ::FFI::Union
-        layout :boolean, Boolean,
-               :i8,      :int8,
-               :u8,      :uint8,
-               :i16,     :int16,
-               :u16,     :uint16,
-               :i32,     :int32,
-               :u32,     :uint32,
-               :i64,     :int64,
-               :u64,     :uint64,
-               :f32,     :float,
-               :f64,     :double,
-               :decimal, Decimal,
-               :bytes,   Bytes,
-               :table,   Table,
-               :array,   Array
-      end
-      
-      class FieldValue < ::FFI::Struct
-        layout :kind,  :uint8,
-               :value, FieldValueValue
-      end
-      
-      class TableEntry < ::FFI::Struct
-        layout :key,   Bytes,
-               :value, FieldValue
-      end
-      
-      FieldValueKindEnum = enum [
+      FieldValueKind = enum ::FFI::TypeDefs[:uint8], [
         :boolean,   't'.ord,
         :i8,        'b'.ord,
         :u8,        'B'.ord,
@@ -183,6 +155,34 @@ module RabbitMQ
         :void,      'V'.ord,
         :bytes,     'x'.ord,
       ]
+      
+      class FieldValueValue < ::FFI::Union
+        layout :boolean, Boolean,
+               :i8,      :int8,
+               :u8,      :uint8,
+               :i16,     :int16,
+               :u16,     :uint16,
+               :i32,     :int32,
+               :u32,     :uint32,
+               :i64,     :int64,
+               :u64,     :uint64,
+               :f32,     :float,
+               :f64,     :double,
+               :decimal, Decimal,
+               :bytes,   Bytes,
+               :table,   Table,
+               :array,   Array
+      end
+      
+      class FieldValue < ::FFI::Struct
+        layout :kind,  FieldValueKind,
+               :value, FieldValueValue
+      end
+      
+      class TableEntry < ::FFI::Struct
+        layout :key,   Bytes,
+               :value, FieldValue
+      end
       
       class PoolBlocklist < ::FFI::Struct
         layout :num_blocks, :int,
@@ -230,7 +230,7 @@ module RabbitMQ
                :payload,    FramePayload
       end
       
-      ResponseTypeEnum = enum [
+      ResponseType = enum [
         :none, 0,
         :normal,
         :library_exception,
@@ -238,18 +238,18 @@ module RabbitMQ
       ]
       
       class RpcReply < ::FFI::Struct
-        layout :reply_type,    ResponseTypeEnum,
+        layout :reply_type,    ResponseType,
                :reply,         Method,
                :library_error, :int
       end
       
-      SaslMethodEnum = enum [
+      SaslMethod = enum [
         :plain, 0,
       ]
       
       ConnectionState = :pointer
       
-      StatusEnum = enum [
+      Status = enum [
         :ok,                          0x0,
         :no_memory,                  -0x0001,
         :bad_amqp_data,              -0x0002,
@@ -275,7 +275,7 @@ module RabbitMQ
         :ssl_connection_failed,      -0x0203,
       ]
       
-      DeliveryModeEnum = enum [
+      DeliveryMode = enum [
         :nonpersistent, 1,
         :persistent,    2,
       ]
@@ -754,13 +754,13 @@ module RabbitMQ
       attach_function :amqp_simple_wait_method,        [ConnectionState, Channel, MethodNumber, :pointer], :int,    **opts
       attach_function :amqp_send_method,               [ConnectionState, Channel, MethodNumber, :pointer], :int,    **opts
       
-      attach_function :amqp_simple_rpc,            [ConnectionState, Channel, MethodNumber, :pointer, :pointer],                     RpcReply.by_value, **opts
-      attach_function :amqp_simple_rpc_decoded,    [ConnectionState, Channel, MethodNumber, MethodNumber, :pointer],                 :pointer,          **opts
-      attach_function :amqp_get_rpc_reply,         [ConnectionState],                                                                RpcReply.by_value, **opts
-      attach_function :amqp_login,                 [ConnectionState, :string, :int, :int, :int, SaslMethodEnum, :varargs],           RpcReply.by_value, **opts
-      attach_function :amqp_login_with_properties, [ConnectionState, :string, :int, :int, :int, :pointer, SaslMethodEnum, :varargs], RpcReply.by_value, **opts
-      attach_function :amqp_channel_close,         [ConnectionState, Channel, :int],                                                 RpcReply.by_value, **opts
-      attach_function :amqp_connection_close,      [ConnectionState, :int],                                                          RpcReply.by_value, **opts
+      attach_function :amqp_simple_rpc,            [ConnectionState, Channel, MethodNumber, :pointer, :pointer],                 RpcReply.by_value, **opts
+      attach_function :amqp_simple_rpc_decoded,    [ConnectionState, Channel, MethodNumber, MethodNumber, :pointer],             :pointer,          **opts
+      attach_function :amqp_get_rpc_reply,         [ConnectionState],                                                            RpcReply.by_value, **opts
+      attach_function :amqp_login,                 [ConnectionState, :string, :int, :int, :int, SaslMethod, :varargs],           RpcReply.by_value, **opts
+      attach_function :amqp_login_with_properties, [ConnectionState, :string, :int, :int, :int, :pointer, SaslMethod, :varargs], RpcReply.by_value, **opts
+      attach_function :amqp_channel_close,         [ConnectionState, Channel, :int],                                             RpcReply.by_value, **opts
+      attach_function :amqp_connection_close,      [ConnectionState, :int],                                                      RpcReply.by_value, **opts
       
       attach_function :amqp_basic_publish, [ConnectionState, Channel, Bytes, Bytes, Boolean, Boolean, :pointer, Bytes], :int, **opts
       attach_function :amqp_basic_ack,     [ConnectionState, Channel, :uint64, Boolean],                                :int, **opts
