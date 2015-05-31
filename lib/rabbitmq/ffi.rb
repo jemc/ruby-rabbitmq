@@ -694,25 +694,25 @@ module RabbitMQ
                :cluster_id,       Bytes
       end
       
-      attach_function :amqp_channel_open,     [ConnectionState, Channel],                                                   :pointer, **opts
-      attach_function :amqp_channel_flow,     [ConnectionState, Channel, Boolean],                                          :pointer, **opts
-      attach_function :amqp_exchange_declare, [ConnectionState, Channel, Bytes, Bytes, Boolean, Boolean, Table],            :pointer, **opts
-      attach_function :amqp_exchange_delete,  [ConnectionState, Channel, Bytes, Boolean],                                   :pointer, **opts
-      attach_function :amqp_exchange_bind,    [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       :pointer, **opts
-      attach_function :amqp_exchange_unbind,  [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       :pointer, **opts
-      attach_function :amqp_queue_declare,    [ConnectionState, Channel, Bytes, Boolean, Boolean, Boolean, Boolean, Table], :pointer, **opts
-      attach_function :amqp_queue_bind,       [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       :pointer, **opts
-      attach_function :amqp_queue_purge,      [ConnectionState, Channel, Bytes],                                            :pointer, **opts
-      attach_function :amqp_queue_delete,     [ConnectionState, Channel, Bytes, Boolean, Boolean],                          :pointer, **opts
-      attach_function :amqp_queue_unbind,     [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       :pointer, **opts
-      attach_function :amqp_basic_qos,        [ConnectionState, Channel, :uint32, :uint16, Boolean],                        :pointer, **opts
-      attach_function :amqp_basic_consume,    [ConnectionState, Channel, Bytes, Bytes, Boolean, Boolean, Boolean, Table],   :pointer, **opts
-      attach_function :amqp_basic_cancel,     [ConnectionState, Channel, Bytes],                                            :pointer, **opts
-      attach_function :amqp_basic_recover,    [ConnectionState, Channel, Boolean],                                          :pointer, **opts
-      attach_function :amqp_tx_select,        [ConnectionState, Channel],                                                   :pointer, **opts
-      attach_function :amqp_tx_commit,        [ConnectionState, Channel],                                                   :pointer, **opts
-      attach_function :amqp_tx_rollback,      [ConnectionState, Channel],                                                   :pointer, **opts
-      attach_function :amqp_confirm_select,   [ConnectionState, Channel],                                                   :pointer, **opts
+      attach_function :amqp_channel_open,     [ConnectionState, Channel],                                                   ChannelOpenOk.ptr,     **opts
+      attach_function :amqp_channel_flow,     [ConnectionState, Channel, Boolean],                                          ChannelFlowOk.ptr,     **opts
+      attach_function :amqp_exchange_declare, [ConnectionState, Channel, Bytes, Bytes, Boolean, Boolean, Table],            ExchangeDeclareOk.ptr, **opts
+      attach_function :amqp_exchange_delete,  [ConnectionState, Channel, Bytes, Boolean],                                   ExchangeDeleteOk.ptr,  **opts
+      attach_function :amqp_exchange_bind,    [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       ExchangeBindOk.ptr,    **opts
+      attach_function :amqp_exchange_unbind,  [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       ExchangeUnbindOk.ptr,  **opts
+      attach_function :amqp_queue_declare,    [ConnectionState, Channel, Bytes, Boolean, Boolean, Boolean, Boolean, Table], QueueDeclareOk.ptr,    **opts
+      attach_function :amqp_queue_bind,       [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       QueueBindOk.ptr,       **opts
+      attach_function :amqp_queue_purge,      [ConnectionState, Channel, Bytes],                                            QueuePurgeOk.ptr,      **opts
+      attach_function :amqp_queue_delete,     [ConnectionState, Channel, Bytes, Boolean, Boolean],                          QueueDeleteOk.ptr,     **opts
+      attach_function :amqp_queue_unbind,     [ConnectionState, Channel, Bytes, Bytes, Bytes, Table],                       QueueUnbindOk.ptr,     **opts
+      attach_function :amqp_basic_qos,        [ConnectionState, Channel, :uint32, :uint16, Boolean],                        BasicQosOk.ptr,        **opts
+      attach_function :amqp_basic_consume,    [ConnectionState, Channel, Bytes, Bytes, Boolean, Boolean, Boolean, Table],   BasicConsumeOk.ptr,    **opts
+      attach_function :amqp_basic_cancel,     [ConnectionState, Channel, Bytes],                                            BasicCancelOk.ptr,     **opts
+      attach_function :amqp_basic_recover,    [ConnectionState, Channel, Boolean],                                          BasicRecoverOk.ptr,    **opts
+      attach_function :amqp_tx_select,        [ConnectionState, Channel],                                                   TxSelect.ptr,          **opts
+      attach_function :amqp_tx_commit,        [ConnectionState, Channel],                                                   TxCommit.ptr,          **opts
+      attach_function :amqp_tx_rollback,      [ConnectionState, Channel],                                                   TxRollback.ptr,        **opts
+      attach_function :amqp_confirm_select,   [ConnectionState, Channel],                                                   ConfirmSelect.ptr,     **opts
       
       attach_function :init_amqp_pool,        [:pointer, :size_t],           :void,    **opts
       attach_function :recycle_amqp_pool,     [:pointer],                    :void,    **opts
