@@ -38,6 +38,7 @@ module RabbitMQ
     def start
       connect_socket!
       login!
+      open_channel!
     end
     
     private def parse_info url=nil
@@ -73,6 +74,13 @@ module RabbitMQ
       rpc_check :"logging in",
         FFI.amqp_login(@ptr, vhost, max_channels, max_frame_size,
           heartbeat_interval, :plain, :string, user, :string, password)
+    end
+    
+    private def open_channel!(number=1)
+      raise DestroyedError unless @ptr
+      
+      FFI.amqp_channel_open(@ptr, number)
+      rpc_check :"opening channel", FFI.amqp_get_rpc_reply(@ptr)
     end
     
     private def rpc_check action, res
