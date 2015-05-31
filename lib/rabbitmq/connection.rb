@@ -4,6 +4,7 @@ module RabbitMQ
     def initialize *args
       @ptr = FFI.amqp_new_connection
       parse_info(*args)
+      create_socket!
       
       @finalizer = self.class.send :create_finalizer_for, @ptr
       ObjectSpace.define_finalizer self, @finalizer
@@ -14,14 +15,17 @@ module RabbitMQ
         @finalizer.call
         ObjectSpace.undefine_finalizer self
       end
-      @ptr = @finalizer = nil
+      @ptr = @socket = @finalizer = nil
     end
     
     class DestroyedError < RuntimeError; end
     
     # @private
     def self.create_finalizer_for(ptr)
-      Proc.new { FFI.amqp_destroy_connection(ptr) }
+      Proc.new do
+        FFI.amqp_connection_close(ptr, 200)
+        FFI.amqp_destroy_connection(ptr)
+      end
     end
     
     def user;     @info[:user];     end
@@ -58,14 +62,18 @@ module RabbitMQ
       end
     end
     
+    private def create_socket!
+      @socket = FFI.amqp_tcp_socket_new(@ptr)
+      Util.null_check :"creating a socket", @socket
+    end
+    
     private def connect_socket!
       raise DestroyedError unless @ptr
       raise NotImplementedError if ssl?
       
-      socket = FFI.amqp_tcp_socket_new(@ptr)
-      Util.null_check :"creating a socket", socket
+      create_socket!
       Util.error_check :"opening a socket",
-        FFI.amqp_socket_open(socket, host, port)
+        FFI.amqp_socket_open(@socket, host, port)
     end
     
     private def login!
