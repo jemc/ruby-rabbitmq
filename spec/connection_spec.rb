@@ -17,6 +17,12 @@ describe RabbitMQ::Connection do
     end
   end
   
+  describe "start" do
+    it "initiates the connection to the server" do
+      subject.start
+    end
+  end
+  
   describe "when given no URL" do
     subject { subject_class.new }
     

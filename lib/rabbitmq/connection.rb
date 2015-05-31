@@ -2,10 +2,10 @@
 module RabbitMQ
   class Connection
     def initialize *args
-      @conn = FFI.amqp_new_connection
+      @ptr = FFI.amqp_new_connection
       parse_info(*args)
       
-      @finalizer = self.class.send :create_finalizer_for, @conn
+      @finalizer = self.class.send :create_finalizer_for, @ptr
       ObjectSpace.define_finalizer self, @finalizer
     end
     
@@ -14,12 +14,14 @@ module RabbitMQ
         @finalizer.call
         ObjectSpace.undefine_finalizer self
       end
-      @conn = @finalizer = nil
+      @ptr = @finalizer = nil
     end
     
+    class DestroyedError < RuntimeError; end
+    
     # @private
-    def self.create_finalizer_for(conn)
-      Proc.new { FFI.amqp_destroy_connection(conn) }
+    def self.create_finalizer_for(ptr)
+      Proc.new { FFI.amqp_destroy_connection(ptr) }
     end
     
     def user;     @info[:user];     end
@@ -29,20 +31,54 @@ module RabbitMQ
     def port;     @info[:port];     end
     def ssl?;     @info[:ssl];      end
     
-    private def parse_info url=nil
-      info = FFI::ConnectionInfo.new
-      url_ptr = Util.strdup_ptr(url) if url
-      
-      if url_ptr
-        Util.error_check FFI.amqp_parse_url(url_ptr, info.pointer)
-      else
-        FFI.amqp_default_connection_info(info.pointer)
-      end
-      
-      # We must copy the members of ConnectionInfo before the url_ptr is freed.
-      @info = info.members.map { |k| [k, info[k]] }.to_h
-      url_ptr.free if url_ptr
+    def max_channels;   @max_channels   ||= 0;      end; attr_writer :max_channels
+    def max_frame_size; @max_frame_size ||= 131072; end; attr_writer :max_frame_size
+    def heartbeat_interval; 0; end # not fully implemented in librabbitmq
+    
+    def start
+      connect_socket!
+      login!
     end
     
+    private def parse_info url=nil
+      info = FFI::ConnectionInfo.new
+      
+      if url
+        url_ptr = Util.strdup_ptr(url)
+        Util.error_check FFI.amqp_parse_url(url_ptr, info.pointer)
+        
+        # We must copy ConnectionInfo before the url_ptr is freed.
+        @info = info.to_h
+        url_ptr.free if url_ptr
+      else
+        FFI.amqp_default_connection_info(info.pointer)
+        @info = info.to_h
+      end
+    end
+    
+    private def connect_socket!
+      raise DestroyedError unless @ptr
+      raise NotImplementedError if ssl?
+      
+      socket = FFI.amqp_tcp_socket_new(@ptr)
+      Util.null_check socket, :"creating a socket"
+      Util.error_check FFI.amqp_socket_open(socket, host, port), :"opening a socket"
+    end
+    
+    private def login!
+      raise DestroyedError unless @ptr
+      
+      rpc_check :"logging in",
+        FFI.amqp_login(@ptr, vhost, max_channels, max_frame_size,
+          heartbeat_interval, :plain, :string, user, :string, password)
+    end
+    
+    private def rpc_check action, res
+      case res[:reply_type]
+      when :library_exception; Util.error_check res[:library_error], action
+      when :server_exception;  raise NotImplementedError
+      else res
+      end
+    end
   end
 end
