@@ -749,13 +749,13 @@ module RabbitMQ
       attach_function :amqp_simple_wait_method,        [ConnectionState, Channel, MethodNumber, :pointer], :int,    **opts
       attach_function :amqp_send_method,               [ConnectionState, Channel, MethodNumber, :pointer], :int,    **opts
       
-      attach_function :amqp_simple_rpc,            [ConnectionState, Channel, MethodNumber, :pointer, :pointer],           RpcReply, **opts
-      attach_function :amqp_simple_rpc_decoded,    [ConnectionState, Channel, MethodNumber, MethodNumber, :pointer],       :pointer, **opts
-      attach_function :amqp_get_rpc_reply,         [ConnectionState],                                                      RpcReply, **opts
-      attach_function :amqp_login,                 [ConnectionState, :string, :int, :int, :int, SaslMethodEnum],           RpcReply, **opts
-      attach_function :amqp_login_with_properties, [ConnectionState, :string, :int, :int, :int, :pointer, SaslMethodEnum], RpcReply, **opts
-      attach_function :amqp_channel_close,         [ConnectionState, Channel, :int],                                       RpcReply, **opts
-      attach_function :amqp_connection_close,      [ConnectionState, :int],                                                RpcReply, **opts
+      attach_function :amqp_simple_rpc,            [ConnectionState, Channel, MethodNumber, :pointer, :pointer],                     RpcReply.by_value, **opts
+      attach_function :amqp_simple_rpc_decoded,    [ConnectionState, Channel, MethodNumber, MethodNumber, :pointer],                 :pointer,          **opts
+      attach_function :amqp_get_rpc_reply,         [ConnectionState],                                                                RpcReply.by_value, **opts
+      attach_function :amqp_login,                 [ConnectionState, :string, :int, :int, :int, SaslMethodEnum, :varargs],           RpcReply.by_value, **opts
+      attach_function :amqp_login_with_properties, [ConnectionState, :string, :int, :int, :int, :pointer, SaslMethodEnum, :varargs], RpcReply.by_value, **opts
+      attach_function :amqp_channel_close,         [ConnectionState, Channel, :int],                                                 RpcReply.by_value, **opts
+      attach_function :amqp_connection_close,      [ConnectionState, :int],                                                          RpcReply.by_value, **opts
       
       attach_function :amqp_basic_publish, [ConnectionState, Channel, Bytes, Bytes, Boolean, Boolean, :pointer, Bytes], :int, **opts
       attach_function :amqp_basic_ack,     [ConnectionState, Channel, :uint64, Boolean],                                :int, **opts
@@ -778,8 +778,8 @@ module RabbitMQ
                :pool,       Pool
       end
       
-      attach_function :amqp_read_message,    [ConnectionState, Channel, :pointer, :int], RpcReply, **opts
-      attach_function :amqp_destroy_message, [:pointer],                                 :void,    **opts
+      attach_function :amqp_read_message,    [ConnectionState, Channel, :pointer, :int], RpcReply.by_value, **opts
+      attach_function :amqp_destroy_message, [:pointer],                                 :void,             **opts
       
       class Envelope < ::FFI::Struct
         layout :channel,      Channel,
@@ -791,8 +791,8 @@ module RabbitMQ
                :message,      Message
       end
       
-      attach_function :amqp_consume_message,  [ConnectionState, :pointer, :pointer, :int], RpcReply, **opts
-      attach_function :amqp_destroy_envelope, [:pointer],                                  :void,    **opts
+      attach_function :amqp_consume_message,  [ConnectionState, :pointer, :pointer, :int], RpcReply.by_value, **opts
+      attach_function :amqp_destroy_envelope, [:pointer],                                  :void,             **opts
       
       class ConnectionInfo < ::FFI::Struct
         layout :user,     :string,
