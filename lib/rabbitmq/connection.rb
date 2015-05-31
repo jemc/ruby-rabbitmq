@@ -74,6 +74,8 @@ module RabbitMQ
       rpc_check :"logging in",
         FFI.amqp_login(@ptr, vhost, max_channels, max_frame_size,
           heartbeat_interval, :plain, :string, user, :string, password)
+      
+      @server_properties = FFI::Table.new(FFI.amqp_get_server_properties(@ptr)).to_h
     end
     
     private def open_channel!(number=1)
