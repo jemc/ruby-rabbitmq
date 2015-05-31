@@ -107,8 +107,8 @@ module RabbitMQ
         :confirm_select_ok,    0x0055000B, # 85, 11; 5570571
       ]
       
-      Flags        = :uint32
-      Channel      = :uint16
+      Flags   = :uint32
+      Channel = :uint16
       
       class Bytes < ::FFI::Struct
         layout :len,   :size_t,
