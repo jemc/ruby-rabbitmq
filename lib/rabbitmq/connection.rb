@@ -40,9 +40,15 @@ module RabbitMQ
     def heartbeat_interval; 0; end # not fully implemented in librabbitmq
     
     def start
+      close # Close if already open
       connect_socket!
       login!
       open_channel!
+    end
+    
+    def close
+      raise DestroyedError unless @ptr
+      FFI.amqp_connection_close(@ptr, 200)
     end
     
     private def parse_info url=nil
@@ -63,6 +69,8 @@ module RabbitMQ
     end
     
     private def create_socket!
+      raise DestroyedError unless @ptr
+      
       @socket = FFI.amqp_tcp_socket_new(@ptr)
       Util.null_check :"creating a socket", @socket
     end

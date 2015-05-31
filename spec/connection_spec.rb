@@ -15,11 +15,41 @@ describe RabbitMQ::Connection do
       subject.destroy
       subject.destroy
     end
+    
+    it "prevents any other network operations on the object" do
+      subject.destroy
+      expect { subject.start }.to raise_error RabbitMQ::Connection::DestroyedError
+      expect { subject.close }.to raise_error RabbitMQ::Connection::DestroyedError
+    end
   end
   
   describe "start" do
     it "initiates the connection to the server" do
       subject.start
+    end
+    
+    it "can be called several times to reconnect" do
+      subject.start
+      subject.start
+      subject.start
+    end
+  end
+  
+  describe "close" do
+    it "closes the initiated connection" do
+      subject.start
+      subject.close
+    end
+    
+    it "can be called several times to no additional effect" do
+      subject.start
+      subject.close
+      subject.close
+      subject.close
+    end
+    
+    it "can be called before connecting to no effect" do
+      subject.close
     end
   end
   
