@@ -50,7 +50,7 @@ module RabbitMQ
         
         # We must copy ConnectionInfo before the url_ptr is freed.
         @info = info.to_h
-        url_ptr.free if url_ptr
+        url_ptr.free
       else
         FFI.amqp_default_connection_info(info.pointer)
         @info = info.to_h
