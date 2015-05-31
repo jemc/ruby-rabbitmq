@@ -40,7 +40,73 @@ module RabbitMQ
         def self.from_native val, ctx; val != 0;    end
       end
       
-      MethodNumber = :uint32
+      MethodNumber = enum ::FFI::TypeDefs[:uint32], [
+        :connection_start,     0x000A000A, # 10, 10; 655370
+        :connection_start_ok,  0x000A000B, # 10, 11; 655371
+        :connection_secure,    0x000A0014, # 10, 20; 655380
+        :connection_secure_ok, 0x000A0015, # 10, 21; 655381
+        :connection_tune,      0x000A001E, # 10, 30; 655390
+        :connection_tune_ok,   0x000A001F, # 10, 31; 655391
+        :connection_open,      0x000A0028, # 10, 40; 655400
+        :connection_open_ok,   0x000A0029, # 10, 41; 655401
+        :connection_close,     0x000A0032, # 10, 50; 655410
+        :connection_close_ok,  0x000A0033, # 10, 51; 655411
+        :connection_blocked,   0x000A003C, # 10, 60; 655420
+        :connection_unblocked, 0x000A003D, # 10, 61; 655421
+        :channel_open,         0x0014000A, # 20, 10; 1310730
+        :channel_open_ok,      0x0014000B, # 20, 11; 1310731
+        :channel_flow,         0x00140014, # 20, 20; 1310740
+        :channel_flow_ok,      0x00140015, # 20, 21; 1310741
+        :channel_close,        0x00140028, # 20, 40; 1310760
+        :channel_close_ok,     0x00140029, # 20, 41; 1310761
+        :access_request,       0x001E000A, # 30, 10; 1966090
+        :access_request_ok,    0x001E000B, # 30, 11; 1966091
+        :exchange_declare,     0x0028000A, # 40, 10; 2621450
+        :exchange_declare_ok,  0x0028000B, # 40, 11; 2621451
+        :exchange_delete,      0x00280014, # 40, 20; 2621460
+        :exchange_delete_ok,   0x00280015, # 40, 21; 2621461
+        :exchange_bind,        0x0028001E, # 40, 30; 2621470
+        :exchange_bind_ok,     0x0028001F, # 40, 31; 2621471
+        :exchange_unbind,      0x00280028, # 40, 40; 2621480
+        :exchange_unbind_ok,   0x00280033, # 40, 51; 2621491
+        :queue_declare,        0x0032000A, # 50, 10; 3276810
+        :queue_declare_ok,     0x0032000B, # 50, 11; 3276811
+        :queue_bind,           0x00320014, # 50, 20; 3276820
+        :queue_bind_ok,        0x00320015, # 50, 21; 3276821
+        :queue_purge,          0x0032001E, # 50, 30; 3276830
+        :queue_purge_ok,       0x0032001F, # 50, 31; 3276831
+        :queue_delete,         0x00320028, # 50, 40; 3276840
+        :queue_delete_ok,      0x00320029, # 50, 41; 3276841
+        :queue_unbind,         0x00320032, # 50, 50; 3276850
+        :queue_unbind_ok,      0x00320033, # 50, 51; 3276851
+        :basic_qos,            0x003C000A, # 60, 10; 3932170
+        :basic_qos_ok,         0x003C000B, # 60, 11; 3932171
+        :basic_consume,        0x003C0014, # 60, 20; 3932180
+        :basic_consume_ok,     0x003C0015, # 60, 21; 3932181
+        :basic_cancel,         0x003C001E, # 60, 30; 3932190
+        :basic_cancel_ok,      0x003C001F, # 60, 31; 3932191
+        :basic_publish,        0x003C0028, # 60, 40; 3932200
+        :basic_return,         0x003C0032, # 60, 50; 3932210
+        :basic_deliver,        0x003C003C, # 60, 60; 3932220
+        :basic_get,            0x003C0046, # 60, 70; 3932230
+        :basic_get_ok,         0x003C0047, # 60, 71; 3932231
+        :basic_get_empty,      0x003C0048, # 60, 72; 3932232
+        :basic_ack,            0x003C0050, # 60, 80; 3932240
+        :basic_reject,         0x003C005A, # 60, 90; 3932250
+        :basic_recover_async,  0x003C0064, # 60, 100; 3932260
+        :basic_recover,        0x003C006E, # 60, 110; 3932270
+        :basic_recover_ok,     0x003C006F, # 60, 111; 3932271
+        :basic_nack,           0x003C0078, # 60, 120; 3932280
+        :tx_select,            0x005A000A, # 90, 10; 5898250
+        :tx_select_ok,         0x005A000B, # 90, 11; 5898251
+        :tx_commit,            0x005A0014, # 90, 20; 5898260
+        :tx_commit_ok,         0x005A0015, # 90, 21; 5898261
+        :tx_rollback,          0x005A001E, # 90, 30; 5898270
+        :tx_rollback_ok,       0x005A001F, # 90, 31; 5898271
+        :confirm_select,       0x0055000A, # 85, 10; 5570570
+        :confirm_select_ok,    0x0055000B, # 85, 11; 5570571
+      ]
+      
       Flags        = :uint32
       Channel      = :uint16
       
