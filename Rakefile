@@ -1,5 +1,4 @@
 
-require "bundler/gem_tasks"
 require 'rspec/core/rake_task'
 
 task :default => :test
@@ -7,12 +6,19 @@ task :default => :test
 # RSpec tests
 RSpec::Core::RakeTask.new :test
 
-task :release_gem => :install do
-  system "gem push pkg/*.gem"
+task :build do
+  system "mkdir -p pkg && cd pkg && gem build ../*.gemspec"
 end
 
 task :g  => :install
-task :gp => :release_gem
+task :install do
+  system "gem install pkg/*.gem"
+end
+
+task :gp => :release
+task :release => :install do
+  system "gem push pkg/*.gem"
+end
 
 task :vendor do
   system "cd ext/rabbitmq && rake --trace"
