@@ -64,5 +64,38 @@ describe RabbitMQ::Util do
         ssl:      true
       )
     end
+    
+    it "given options overrides the default values with the options" do
+      subject.connection_info(
+        user:     "foo",
+        password: "bar",
+        port:     5678,
+        ssl:      true
+      ).should eq(
+        user:     "foo",
+        password: "bar",
+        host:     "localhost",
+        vhost:    "/",
+        port:     5678,
+        ssl:      true
+      )
+    end
+    
+    it "given a URL and options overrides the parsed values with the options" do
+      subject.connection_info(
+        "amqp://user:password@host:1234/vhost",
+        user:     "foo",
+        password: "bar",
+        port:     5678,
+        ssl:      true
+      ).should eq(
+        user:     "foo",
+        password: "bar",
+        host:     "host",
+        vhost:    "vhost",
+        port:     5678,
+        ssl:      true
+      )
+    end
   end
 end
