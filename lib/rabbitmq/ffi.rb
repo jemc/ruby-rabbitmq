@@ -6,24 +6,10 @@ module RabbitMQ
   module FFI
     extend ::FFI::Library
     
-    def self.available?
-      @available
-    end
+    ffi_lib \
+      File.expand_path("../../ext/rabbitmq/librabbitmq.so", File.dirname(__FILE__))
     
-    begin
-      lib_name = 'librabbitmq'
-      lib_paths = ['/usr/local/lib', '/opt/local/lib', '/usr/lib64', '/usr/local/lib64']
-        .map { |path| "#{path}/#{lib_name}.#{::FFI::Platform::LIBSUFFIX}" }
-      ffi_lib lib_paths + [lib_name]
-      @available = true
-    rescue LoadError
-      warn ""
-      warn "WARNING: #{self} is not available without librabbitmq."
-      warn ""
-      @available = false
-    end
-    
-    if available?
+    begin # TODO: remove begin/end block
       opts = {
         blocking: true  # only necessary on MRI to deal with the GIL.
       }

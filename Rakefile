@@ -13,3 +13,11 @@ end
 
 task :g  => :install
 task :gp => :release_gem
+
+task :vendor do
+  system "cd ext/rabbitmq && rake --trace"
+end
+
+task :vendor_clean do
+  system "cd ext/rabbitmq && rake clean"
+end

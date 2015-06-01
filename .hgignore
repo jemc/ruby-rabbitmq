@@ -1,2 +1,6 @@
 \.gem$
 ^Gemfile\.lock$
+ext/rabbitmq/rabbitmq-c.tar.gz
+ext/rabbitmq/rabbitmq-c
+ext/rabbitmq/config.status
+ext/rabbitmq/librabbitmq.so
