@@ -253,6 +253,8 @@ module RabbitMQ
         :timer_failure,              -0x000E,
         :heartbeat_timeout,          -0x000F,
         :unexpected_state,           -0x0010,
+        :unexpected_socket_closed,   -0x0011,
+        :unexpected_socket_inuse,    -0x0012,
         :tcp_error,                  -0x0100,
         :tcp_socketlib_init_error,   -0x0101,
         :ssl_error,                  -0x0200,
@@ -721,6 +723,8 @@ module RabbitMQ
       attach_function :amqp_set_sockfd,         [ConnectionState, :int],             :void,  **opts
       attach_function :amqp_tune_connection,    [ConnectionState, :int, :int, :int], Status, **opts
       attach_function :amqp_get_channel_max,    [ConnectionState],                   :int,   **opts
+      attach_function :amqp_get_frame_max,      [ConnectionState],                   :int,   **opts
+      attach_function :amqp_get_heartbeat,      [ConnectionState],                   :int,   **opts
       attach_function :amqp_destroy_connection, [ConnectionState],                   Status, **opts
       
       attach_function :amqp_handle_input,                     [ConnectionState, Bytes, Frame.ptr], Status,  **opts
