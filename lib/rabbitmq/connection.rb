@@ -44,11 +44,15 @@ module RabbitMQ
       connect_socket!
       login!
       open_channel!
+      
+      self
     end
     
     def close
       raise DestroyedError unless @ptr
       FFI.amqp_connection_close(@ptr, 200)
+      
+      self
     end
     
     private def create_socket!

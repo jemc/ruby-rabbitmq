@@ -33,6 +33,10 @@ describe RabbitMQ::Connection do
       subject.start
       subject.start
     end
+    
+    it "returns self" do
+      subject.start.should eq subject
+    end
   end
   
   describe "close" do
@@ -50,6 +54,10 @@ describe RabbitMQ::Connection do
     
     it "can be called before connecting to no effect" do
       subject.close
+    end
+    
+    it "returns self" do
+      subject.close.should eq subject
     end
   end
   
