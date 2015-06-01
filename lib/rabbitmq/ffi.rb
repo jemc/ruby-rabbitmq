@@ -811,12 +811,18 @@ module RabbitMQ
       attach_function :amqp_tcp_socket_new,        [ConnectionState], :pointer, **opts
       attach_function :amqp_tcp_socket_set_sockfd, [:pointer, :int],  :void,    **opts
       
-      attach_function :amqp_ssl_socket_new,             [ConnectionState],                      :pointer, **opts
-      attach_function :amqp_ssl_socket_set_cacert,      [:pointer, :string],                    Status,   **opts
-      attach_function :amqp_ssl_socket_set_key,         [:pointer, :string, :string],           Status,   **opts
-      attach_function :amqp_ssl_socket_set_key_buffer,  [:pointer, :string, :pointer, :size_t], Status,   **opts
-      attach_function :amqp_ssl_socket_set_verify,      [:pointer, Boolean],                    :void,    **opts
-      attach_function :amqp_set_initialize_ssl_library, [Boolean],                              :void,    **opts
+      begin # SSL support is optional
+        attach_function :amqp_ssl_socket_new,             [ConnectionState],                      :pointer, **opts
+        attach_function :amqp_ssl_socket_set_cacert,      [:pointer, :string],                    Status,   **opts
+        attach_function :amqp_ssl_socket_set_key,         [:pointer, :string, :string],           Status,   **opts
+        attach_function :amqp_ssl_socket_set_key_buffer,  [:pointer, :string, :pointer, :size_t], Status,   **opts
+        attach_function :amqp_ssl_socket_set_verify,      [:pointer, Boolean],                    :void,    **opts
+        attach_function :amqp_set_initialize_ssl_library, [Boolean],                              :void,    **opts
+        @has_ssl = true
+      rescue LoadError
+        @has_ssl = false
+      end
+      def self.has_ssl?; @has_ssl; end
     end
   end
 end
