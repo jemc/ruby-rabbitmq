@@ -7,11 +7,14 @@ task :default => :test
 RSpec::Core::RakeTask.new :test
 
 task :build do
-  system "mkdir -p pkg && cd pkg && gem build ../*.gemspec"
+  system "rm -f *.gem"
+  system "rm -rf pkg && mkdir pkg"
+  system "gem build *.gemspec"
+  system "mv *.gem pkg/"
 end
 
-task :g  => :install
-task :install do
+task :g => :install
+task :install => :build do
   system "gem install pkg/*.gem"
 end
 
