@@ -5,10 +5,10 @@ module RabbitMQ
     attr_reader :connection
     attr_reader :id
     
-    def initialize(connection, id)
+    def initialize(connection, id, pre_allocated: false)
       @connection = connection
       @id         = id
-      connection.send(:allocate_channel, id)
+      connection.send(:allocate_channel, id) unless pre_allocated
       
       @finalizer = self.class.send :create_finalizer_for, @connection, @id
       ObjectSpace.define_finalizer self, @finalizer

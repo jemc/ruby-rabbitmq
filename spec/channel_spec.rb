@@ -11,10 +11,20 @@ describe RabbitMQ::Channel do
   its(:connection) { should eq connection }
   its(:id)         { should eq id }
   
+  let(:max_id) { RabbitMQ::FFI::CHANNEL_MAX_ID }
+  
   it "cannot be created if the given channel id is already allocated" do
     subject
-    expect { subject_class.new(connection, id) }.to raise_error /already in use/
-    expect { subject_class.new(connection, id) }.to raise_error /already in use/
+    expect { subject_class.new(connection, id) }.to \
+      raise_error ArgumentError, /already in use/
+    expect { subject_class.new(connection, id) }.to \
+      raise_error ArgumentError, /already in use/
+  end
+  
+  it "cannot be created if the given channel id is too high" do
+    subject_class.new(connection, max_id)
+    expect { subject_class.new(connection, max_id + 1) }.to \
+      raise_error ArgumentError, /too high/
   end
   
   describe "release" do

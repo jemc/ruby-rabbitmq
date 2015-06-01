@@ -80,4 +80,35 @@ describe RabbitMQ::Connection do
     subject.port    .should eq 1234
     subject.ssl?    .should eq false
   end
+  
+  describe "channel" do
+    it "allocates id numbers in sequential ascending order" do
+      channels = 100.times.map { subject.channel }
+      channels.each_with_index { |c,i| c.id.should eq i+1 }
+    end
+    
+    it "allocates slots from released channels when available" do
+      channels = 100.times.map { subject.channel }
+      channels.each_with_index { |c,i| c.id.should eq i+1 }
+      
+      20.times do
+        channels.shuffle!
+        channel = channels.pop
+        id = channel.id
+        channel.release
+        channel = subject.channel
+        channels.push channel
+        channel.id.should eq id
+      end
+      
+      subject.channel.id.should eq 101
+    end
+    
+    it "raises an ArgumentError when there are no more channels available" do
+      subject.max_channels = 100
+      channels = 100.times.map { subject.channel }
+      expect { subject.channel }.to raise_error ArgumentError, /too high/
+    end
+  end
+  
 end

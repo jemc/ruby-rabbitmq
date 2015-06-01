@@ -4,7 +4,8 @@ module RabbitMQ
     def initialize *args
       @ptr  = FFI.amqp_new_connection
       @info = Util.connection_info(*args)
-      @open_channels = {}
+      @open_channels     = {}
+      @released_channels = {}
       create_socket!
       
       @finalizer = self.class.send :create_finalizer_for, @ptr
@@ -36,15 +37,22 @@ module RabbitMQ
     def port;     @info[:port];     end
     def ssl?;     @info[:ssl];      end
     
-    def max_channels;   @max_channels   ||= 0;      end; attr_writer :max_channels
-    def max_frame_size; @max_frame_size ||= 131072; end; attr_writer :max_frame_size
+    def max_channels
+      @max_channels ||= FFI::CHANNEL_MAX_ID
+    end
+    attr_writer :max_channels
+    
+    def max_frame_size
+      @max_frame_size ||= 131072
+    end
+    attr_writer :max_frame_size
+    
     def heartbeat_interval; 0; end # not fully implemented in librabbitmq
     
     def start
       close # Close if already open
       connect_socket!
       login!
-      @internal_channel = open_channel(1)
       
       self
     end
@@ -56,6 +64,10 @@ module RabbitMQ
       release_all_channels
       
       self
+    end
+    
+    def channel(id=nil)
+      Channel.new(self, allocate_channel(id), pre_allocated: true)
     end
     
     private def create_socket!
@@ -84,24 +96,36 @@ module RabbitMQ
       @server_properties = FFI::Table.new(FFI.amqp_get_server_properties(@ptr)).to_h
     end
     
-    private def open_channel(number)
+    private def open_channel(id)
       raise DestroyedError unless @ptr
       
-      FFI.amqp_channel_open(@ptr, number)
+      FFI.amqp_channel_open(@ptr, id)
       rpc_check :"opening channel", FFI.amqp_get_rpc_reply(@ptr)
     end
     
-    private def allocate_channel(number)
-      raise "channel #{number} is already in use" if @open_channels[number]
-      @open_channels[number] = true
+    private def allocate_channel(id=nil)
+      if id
+        raise ArgumentError, "channel #{id} is already in use" if @open_channels[id]
+      elsif @released_channels.empty?
+        id = (@open_channels.keys.sort.last || 0) + 1
+      else
+        id = @released_channels.keys.first
+      end
+      raise ArgumentError, "channel #{id} is too high" if id > max_channels
+      @released_channels.delete(id)
+      @open_channels[id] = true
+      
+      id
     end
     
-    private def release_channel(number)
-      @open_channels.delete(number)
+    private def release_channel(id)
+      @open_channels.delete(id)
+      @released_channels[id] = true
     end
     
     private def release_all_channels
       @open_channels.clear
+      @released_channels.clear
     end
     
     private def rpc_check action, res
