@@ -4,6 +4,7 @@ module RabbitMQ
     def initialize *args
       @ptr  = FFI.amqp_new_connection
       @info = Util.connection_info(*args)
+      @open_channels = {}
       create_socket!
       
       @finalizer = self.class.send :create_finalizer_for, @ptr
@@ -43,7 +44,7 @@ module RabbitMQ
       close # Close if already open
       connect_socket!
       login!
-      open_channel!
+      @internal_channel = open_channel(1)
       
       self
     end
@@ -51,6 +52,8 @@ module RabbitMQ
     def close
       raise DestroyedError unless @ptr
       FFI.amqp_connection_close(@ptr, 200)
+      
+      release_all_channels
       
       self
     end
@@ -81,11 +84,24 @@ module RabbitMQ
       @server_properties = FFI::Table.new(FFI.amqp_get_server_properties(@ptr)).to_h
     end
     
-    private def open_channel!(number=1)
+    private def open_channel(number)
       raise DestroyedError unless @ptr
       
       FFI.amqp_channel_open(@ptr, number)
       rpc_check :"opening channel", FFI.amqp_get_rpc_reply(@ptr)
+    end
+    
+    private def allocate_channel(number)
+      raise "channel #{number} is already in use" if @open_channels[number]
+      @open_channels[number] = true
+    end
+    
+    private def release_channel(number)
+      @open_channels.delete(number)
+    end
+    
+    private def release_all_channels
+      @open_channels.clear
     end
     
     private def rpc_check action, res
