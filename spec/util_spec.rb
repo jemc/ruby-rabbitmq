@@ -26,4 +26,43 @@ describe RabbitMQ::Util do
         raise_error RabbitMQ::FFI::Error, /foo/
     end
   end
+  
+  describe "connection_info" do
+    it "given no arguments returns default values" do
+      subject.connection_info.should eq(
+        user:     "guest",
+        password: "guest",
+        host:     "localhost",
+        vhost:    "/",
+        port:     5672,
+        ssl:      false
+      )
+    end
+    
+    it "given a URL parses values from the URL" do
+      subject.connection_info(
+        "amqp://user:password@host:1234/vhost"
+      ).should eq(
+        user:     "user",
+        password: "password",
+        host:     "host",
+        vhost:    "vhost",
+        port:     1234,
+        ssl:      false
+      )
+    end
+    
+    it "given an SSL URL parses values from the URL" do
+      subject.connection_info(
+        "amqps://user:password@host:1234/vhost"
+      ).should eq(
+        user:     "user",
+        password: "password",
+        host:     "host",
+        vhost:    "vhost",
+        port:     1234,
+        ssl:      true
+      )
+    end
+  end
 end

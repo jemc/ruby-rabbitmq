@@ -1,8 +1,9 @@
 
 class RabbitMQ::FFI::Error < RuntimeError; end
 
-module RabbitMQ::Util
-  class << self
+module RabbitMQ
+  module Util; end
+  class << Util
     
     def error_check action, status
       return if status == :ok
@@ -30,6 +31,24 @@ module RabbitMQ::Util
       ptr = mem_ptr(str.bytesize, **kwargs)
       ptr.write_string(str)
       ptr
+    end
+    
+    def connection_info url=nil
+      info = FFI::ConnectionInfo.new
+      
+      if url
+        url_ptr = Util.strdup_ptr(url)
+        Util.error_check :"parsing connection URL",
+          FFI.amqp_parse_url(url_ptr, info)
+        
+        # We must copy ConnectionInfo before the url_ptr is freed.
+        result = info.to_h
+        url_ptr.free
+        result
+      else
+        FFI.amqp_default_connection_info(info)
+        info.to_h
+      end
     end
     
   end

@@ -53,38 +53,23 @@ describe RabbitMQ::Connection do
     end
   end
   
-  describe "when given no URL" do
-    subject { subject_class.new }
+  it "uses Util.connection_info to parse info from its creation arguments" do
+    args = ["parsable url", { foo: "bar" }]
+    RabbitMQ::Util.should_receive(:connection_info).with(*args) {{
+      user:     "user",
+      password: "password",
+      host:     "host",
+      vhost:    "vhost",
+      port:     1234,
+      ssl:      false
+    }}
+    subject = subject_class.new(*args)
     
-    its(:user)     { should eq "guest" }
-    its(:password) { should eq "guest" }
-    its(:host)     { should eq "localhost" }
-    its(:vhost)    { should eq "/" }
-    its(:port)     { should eq  5672 }
-    it             { should_not be_ssl }
-  end
-  
-  describe "when given a URL" do
-    subject { subject_class.new(url) }
-    let(:url) { "amqp://user:password@host:1234/vhost" }
-    
-    its(:user)     { should eq "user" }
-    its(:password) { should eq "password" }
-    its(:host)     { should eq "host" }
-    its(:vhost)    { should eq "vhost" }
-    its(:port)     { should eq  1234 }
-    it             { should_not be_ssl }
-  end
-  
-  describe "when given an SSL URL" do
-    subject { subject_class.new(url) }
-    let(:url) { "amqps://user:password@host:1234/vhost" }
-    
-    its(:user)     { should eq "user" }
-    its(:password) { should eq "password" }
-    its(:host)     { should eq "host" }
-    its(:vhost)    { should eq "vhost" }
-    its(:port)     { should eq  1234 }
-    it             { should be_ssl }
+    subject.user    .should eq "user"
+    subject.password.should eq "password"
+    subject.host    .should eq "host"
+    subject.vhost   .should eq "vhost"
+    subject.port    .should eq 1234
+    subject.ssl?    .should eq false
   end
 end

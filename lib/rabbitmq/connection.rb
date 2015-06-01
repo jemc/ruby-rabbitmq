@@ -2,8 +2,8 @@
 module RabbitMQ
   class Connection
     def initialize *args
-      @ptr = FFI.amqp_new_connection
-      parse_info(*args)
+      @ptr  = FFI.amqp_new_connection
+      @info = Util.connection_info(*args)
       create_socket!
       
       @finalizer = self.class.send :create_finalizer_for, @ptr
@@ -52,20 +52,7 @@ module RabbitMQ
     end
     
     private def parse_info url=nil
-      info = FFI::ConnectionInfo.new
       
-      if url
-        url_ptr = Util.strdup_ptr(url)
-        Util.error_check :"parsing connection URL",
-          FFI.amqp_parse_url(url_ptr, info)
-        
-        # We must copy ConnectionInfo before the url_ptr is freed.
-        @info = info.to_h
-        url_ptr.free
-      else
-        FFI.amqp_default_connection_info(info)
-        @info = info.to_h
-      end
     end
     
     private def create_socket!
