@@ -19,6 +19,39 @@ module RabbitMQ
       attach_function :amqp_version_number, [], :uint32, **opts
       attach_function :amqp_version,        [], :string, **opts
       
+      Status = enum [
+        :ok,                          0x0,
+        :no_memory,                  -0x0001,
+        :bad_amqp_data,              -0x0002,
+        :unknown_class,              -0x0003,
+        :unknown_method,             -0x0004,
+        :hostname_resolution_failed, -0x0005,
+        :incompatible_amqp_version,  -0x0006,
+        :connection_closed,          -0x0007,
+        :bad_url,                    -0x0008,
+        :socket_error,               -0x0009,
+        :invalid_parameter,          -0x000A,
+        :table_too_big,              -0x000B,
+        :wrong_method,               -0x000C,
+        :timeout,                    -0x000D,
+        :timer_failure,              -0x000E,
+        :heartbeat_timeout,          -0x000F,
+        :unexpected_state,           -0x0010,
+        :unexpected_socket_closed,   -0x0011,
+        :unexpected_socket_inuse,    -0x0012,
+        :tcp_error,                  -0x0100,
+        :tcp_socketlib_init_error,   -0x0101,
+        :ssl_error,                  -0x0200,
+        :ssl_hostname_verify_failed, -0x0201,
+        :ssl_peer_verify_failed,     -0x0202,
+        :ssl_connection_failed,      -0x0203,
+      ]
+      
+      DeliveryMode = enum [
+        :nonpersistent, 1,
+        :persistent,    2,
+      ]
+      
       class Timeval < ::FFI::Struct
         layout :tv_sec,  :time_t,
                :tv_usec, :suseconds_t
@@ -226,7 +259,7 @@ module RabbitMQ
       class RpcReply < ::FFI::Struct
         layout :reply_type,    ResponseType,
                :reply,         Method,
-               :library_error, :int
+               :library_error, Status
       end
       
       SaslMethod = enum [
@@ -234,39 +267,6 @@ module RabbitMQ
       ]
       
       ConnectionState = :pointer
-      
-      Status = enum [
-        :ok,                          0x0,
-        :no_memory,                  -0x0001,
-        :bad_amqp_data,              -0x0002,
-        :unknown_class,              -0x0003,
-        :unknown_method,             -0x0004,
-        :hostname_resolution_failed, -0x0005,
-        :incompatible_amqp_version,  -0x0006,
-        :connection_closed,          -0x0007,
-        :bad_url,                    -0x0008,
-        :socket_error,               -0x0009,
-        :invalid_parameter,          -0x000A,
-        :table_too_big,              -0x000B,
-        :wrong_method,               -0x000C,
-        :timeout,                    -0x000D,
-        :timer_failure,              -0x000E,
-        :heartbeat_timeout,          -0x000F,
-        :unexpected_state,           -0x0010,
-        :unexpected_socket_closed,   -0x0011,
-        :unexpected_socket_inuse,    -0x0012,
-        :tcp_error,                  -0x0100,
-        :tcp_socketlib_init_error,   -0x0101,
-        :ssl_error,                  -0x0200,
-        :ssl_hostname_verify_failed, -0x0201,
-        :ssl_peer_verify_failed,     -0x0202,
-        :ssl_connection_failed,      -0x0203,
-      ]
-      
-      DeliveryMode = enum [
-        :nonpersistent, 1,
-        :persistent,    2,
-      ]
       
       attach_function :amqp_constant_name,          [:int], :string, **opts
       attach_function :amqp_constant_is_hard_error, [:int], Boolean, **opts
