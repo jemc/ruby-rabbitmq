@@ -1,6 +1,4 @@
 
-class RabbitMQ::FFI::Error < RuntimeError; end
-
 module RabbitMQ
   module Util; end
   class << Util

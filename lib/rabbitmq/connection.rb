@@ -51,10 +51,6 @@ module RabbitMQ
       FFI.amqp_connection_close(@ptr, 200)
     end
     
-    private def parse_info url=nil
-      
-    end
-    
     private def create_socket!
       raise DestroyedError unless @ptr
       
