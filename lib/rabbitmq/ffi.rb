@@ -745,7 +745,7 @@ module RabbitMQ
       attach_function :amqp_simple_wait_frame,         [ConnectionState, Frame.ptr],                         Status,  **opts
       attach_function :amqp_simple_wait_frame_noblock, [ConnectionState, Frame.ptr, Timeval.ptr],            Status,  **opts
       attach_function :amqp_simple_wait_method,        [ConnectionState, Channel, MethodNumber, Method.ptr], Status,  **opts
-      attach_function :amqp_send_method,               [ConnectionState, Channel, MethodNumber, Method.ptr], Status,  **opts
+      attach_function :amqp_send_method,               [ConnectionState, Channel, MethodNumber, :pointer],   Status,  **opts
       
       attach_function :amqp_simple_rpc,            [ConnectionState, Channel, MethodNumber, :pointer, :pointer],                  RpcReply.by_value, **opts
       attach_function :amqp_simple_rpc_decoded,    [ConnectionState, Channel, MethodNumber, MethodNumber, :pointer],              :pointer,          **opts
