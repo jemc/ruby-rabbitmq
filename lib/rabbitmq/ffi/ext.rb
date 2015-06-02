@@ -2,6 +2,15 @@
 module RabbitMQ
   module FFI
     
+    class Timeval
+      def self.from(seconds)
+        obj = new
+        obj[:tv_sec] = seconds.to_i
+        obj[:tv_usec] = (seconds * 1_000_000).to_i
+        obj
+      end
+    end
+    
     class ConnectionInfo
       def to_h
         members.map { |k| [k, self[k]] }.to_h
