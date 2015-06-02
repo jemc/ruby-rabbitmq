@@ -46,4 +46,14 @@ describe RabbitMQ::Channel do
     end
   end
   
+  describe "queue_declare" do
+    it "declares a queue" do
+      res = subject.queue_declare("my_queue", durable: true, passive: true)
+      res.delete(:queue)         .should eq "my_queue"
+      res.delete(:message_count) .should be_an Integer
+      res.delete(:consumer_count).should be_an Integer
+      res.should be_empty
+    end
+  end
+  
 end

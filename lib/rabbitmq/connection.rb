@@ -4,8 +4,11 @@ module RabbitMQ
     def initialize *args
       @ptr  = FFI.amqp_new_connection
       @info = Util.connection_info(*args)
+      
       @open_channels     = {}
       @released_channels = {}
+      @incoming_events   = Hash.new { |h,k| h[k] = [] }
+      
       create_socket!
       
       @finalizer = self.class.send :create_finalizer_for, @ptr
@@ -36,6 +39,11 @@ module RabbitMQ
     def vhost;    @info[:vhost];    end
     def port;     @info[:port];     end
     def ssl?;     @info[:ssl];      end
+    
+    def protocol_timeout
+      @protocol_timeout ||= 30 # seconds
+    end
+    attr_writer :protocol_timeout
     
     def max_channels
       @max_channels ||= FFI::CHANNEL_MAX_ID
@@ -129,6 +137,48 @@ module RabbitMQ
     private def release_all_channels
       @open_channels.clear
       @released_channels.clear
+    end
+    
+    private def send_method(channel, method)
+      raise DestroyedError unless @ptr
+      
+      method_type = FFI::Method.lookup(method.class)
+      FFI.amqp_send_method(@ptr, channel, method_type, method.pointer)
+    end
+    
+    private def fetch_next_frame(timeout=0, start=Time.now)
+      frame   = FFI::Frame.new
+      timeval = FFI::Timeval.from(timeout - (start-Time.now))
+      status  = FFI.amqp_simple_wait_frame_noblock(@ptr, frame, timeval)
+      
+      case status
+      when :ok;      frame
+      when :timeout; nil
+      else Util.error_check :"fetching the next frame", status
+      end
+    end
+    
+    private def fetch_events(timeout=protocol_timeout, start=Time.now)
+      raise DestroyedError unless @ptr
+      
+      while (frame = fetch_next_frame!(timeout, start))
+        ch_id = frame[:channel]
+        event = frame.payload.decoded
+        @incoming_events[ch_id] << event
+      end
+    end
+    
+    private def fetch_event_for_channel(channel, timeout=protocol_timeout, start=Time.now)
+      raise DestroyedError unless @ptr
+      
+      found = @incoming_events[channel].pop
+      return found if found
+      
+      while (frame = fetch_next_frame(timeout, start))
+        event = frame.payload.decoded
+        return event if frame[:channel] == channel
+        @incoming_events[frame[:channel]] << frame.payload.decoded if frame
+      end
     end
     
     private def rpc_check action, res

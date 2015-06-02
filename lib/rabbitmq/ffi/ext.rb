@@ -108,5 +108,38 @@ module RabbitMQ
       end
     end
     
+    module MethodClassMixin
+      def apply(params={})
+        params.each do |key, value|
+          case value
+          when String; value = FFI::Bytes.from_s(value)
+          end
+          self[key] = value
+        end
+      end
+      
+      def to_h
+        result = {}
+        self.members.each do |key| [key, self[key]]
+          value = self[key]
+          case value
+          when FFI::Bytes
+            value = value.to_s
+          end
+          result[key] = value
+        end
+        result
+      end
+      
+      def describe
+        str = "#{self.class.to_s} {\n"
+        to_h.each do |key, value|
+          str.concat "  #{key}: #{value}\n"
+        end
+        str.concat "}"
+      end
+    end
+    Method::MethodClasses.each { |_, kls| kls.send(:include, MethodClassMixin) }
+    
   end
 end
