@@ -82,6 +82,8 @@ describe RabbitMQ::Connection do
   end
   
   describe "channel" do
+    before { subject.start }
+    
     it "allocates id numbers in sequential ascending order" do
       channels = 100.times.map { subject.channel }
       channels.each_with_index { |c,i| c.id.should eq i+1 }

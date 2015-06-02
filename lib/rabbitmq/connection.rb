@@ -112,7 +112,10 @@ module RabbitMQ
         id = @released_channels.keys.first
       end
       raise ArgumentError, "channel #{id} is too high" if id > max_channels
-      @released_channels.delete(id)
+      
+      already_open = @released_channels.delete(id)
+      open_channel(id) unless already_open
+      
       @open_channels[id] = true
       
       id
