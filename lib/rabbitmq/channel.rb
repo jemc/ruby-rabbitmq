@@ -100,6 +100,7 @@ module RabbitMQ
         durable:     opts.fetch(:durable,     false),
         exclusive:   opts.fetch(:exclusive,   false),
         auto_delete: opts.fetch(:auto_delete, false),
+        arguments:   opts.fetch(:arguments,   {}),
       ], expect: :queue_declare_ok
     end
     
@@ -131,6 +132,47 @@ module RabbitMQ
         if_unused: opts.fetch(:if_unused, false),
         if_empty:  opts.fetch(:if_empty,  false),
       ], expect: :queue_delete_ok
+    end
+    
+    ##
+    # Consumer operations
+    
+    def basic_qos(**opts)
+      rpc :basic_qos, [
+        prefetch_count: opts.fetch(:prefetch_count, 0),
+        prefetch_size:  opts.fetch(:prefetch_size,  0),
+        global:         opts.fetch(:global,         false),
+      ], expect: :basic_qos_ok
+    end
+    
+    def basic_consume(queue, consumer_tag="", **opts)
+      rpc :basic_consume, [
+        queue:        queue,
+        consumer_tag: consumer_tag,
+        no_local:     opts.fetch(:no_local,     false),
+        no_ack:       opts.fetch(:no_ack,       false),
+        exclusive:    opts.fetch(:exclusive,    false),
+        arguments:    opts.fetch(:arguments,    {}),
+      ], expect: :basic_consume_ok
+    end
+    
+    def basic_cancel(consumer_tag)
+      rpc :basic_cancel, [consumer_tag: consumer_tag], expect: :basic_cancel_ok
+    end
+    
+    ##
+    # Transaction operations
+    
+    def tx_select
+      rpc :tx_select, expect: :tx_select_ok
+    end
+    
+    def tx_commit
+      rpc :tx_commit, expect: :tx_commit_ok
+    end
+    
+    def tx_rollback
+      rpc :tx_rollback, expect: :tx_rollback_ok
     end
     
   end

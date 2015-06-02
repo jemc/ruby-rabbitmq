@@ -70,8 +70,8 @@ describe RabbitMQ::Channel do
   end
   
   it "can perform queue operations" do
-    res = subject.exchange_delete("my_exchange")
-    res = subject.exchange_declare("my_exchange", "direct", durable: true)
+    subject.exchange_delete("my_exchange")
+    subject.exchange_declare("my_exchange", "direct", durable: true)
     
     res = subject.queue_delete("my_queue")
     res.delete(:message_count).should be_an Integer
@@ -94,6 +94,48 @@ describe RabbitMQ::Channel do
     
     res = subject.queue_delete("my_queue", if_unused: true)
     res.delete(:message_count).should be_an Integer
+    res.should be_empty
+  end
+  
+  it "can perform consumer operations" do
+    subject.queue_delete("my_queue")
+    subject.queue_declare("my_queue")
+    
+    res = subject.basic_qos(prefetch_count: 10, global: true)
+    res.should be_empty
+    
+    tag = "my_consumer"
+    res = subject.basic_consume("my_queue", tag, exclusive: true)
+    res.delete(:consumer_tag).should eq tag
+    res.should be_empty
+    
+    res = subject.basic_cancel(tag)
+    res.delete(:consumer_tag).should eq tag
+    res.should be_empty
+    
+    res = subject.basic_consume("my_queue")
+    tag = res.delete(:consumer_tag)
+    tag.should be_a String; tag.should_not be_empty
+    res.should be_empty
+    
+    res = subject.basic_cancel(tag)
+    res.delete(:consumer_tag).should eq tag
+    res.should be_empty
+  end
+  
+  it "can perform transaction operations" do
+    res = subject.tx_select
+    res.should be_empty
+    subject.queue_delete("my_queue")
+    subject.queue_declare("my_queue")
+    res = subject.tx_rollback
+    res.should be_empty
+    
+    res = subject.tx_select
+    res.should be_empty
+    subject.queue_delete("my_queue")
+    subject.queue_declare("my_queue")
+    res = subject.tx_commit
     res.should be_empty
   end
   
