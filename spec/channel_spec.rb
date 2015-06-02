@@ -46,14 +46,55 @@ describe RabbitMQ::Channel do
     end
   end
   
-  describe "queue_declare" do
-    it "declares a queue" do
-      res = subject.queue_declare("my_queue", durable: true, passive: true)
-      res.delete(:queue)         .should eq "my_queue"
-      res.delete(:message_count) .should be_an Integer
-      res.delete(:consumer_count).should be_an Integer
-      res.should be_empty
-    end
+  it "can perform exchange operations" do
+    res = subject.exchange_delete("my_exchange")
+    res.should be_empty
+    res = subject.exchange_delete("my_other_exchange")
+    res.should be_empty
+    
+    res = subject.exchange_declare("my_exchange", "direct", durable: true)
+    res.should be_empty
+    res = subject.exchange_declare("my_other_exchange", "topic", durable: true)
+    res.should be_empty
+    
+    res = subject.exchange_bind("my_exchange", "my_other_exchange", routing_key: "my_key")
+    res.should be_empty
+    
+    res = subject.exchange_unbind("my_exchange", "my_other_exchange", routing_key: "my_key")
+    res.should be_empty
+    
+    res = subject.exchange_delete("my_exchange", if_unused: true)
+    res.should be_empty
+    res = subject.exchange_delete("my_other_exchange", if_unused: true)
+    res.should be_empty
+  end
+  
+  it "can perform queue operations" do
+    res = subject.exchange_delete("my_exchange")
+    res = subject.exchange_declare("my_exchange", "direct", durable: true)
+    
+    res = subject.queue_delete("my_queue")
+    res.delete(:message_count).should be_an Integer
+    res.should be_empty
+    
+    res = subject.queue_declare("my_queue", durable: true)
+    res.delete(:queue)         .should eq "my_queue"
+    res.delete(:message_count) .should be_an Integer
+    res.delete(:consumer_count).should be_an Integer
+    res.should be_empty
+    
+    res = subject.queue_bind("my_queue", "my_exchange", routing_key: "my_key")
+    res.should be_empty
+    res = subject.queue_unbind("my_queue", "my_exchange", routing_key: "my_key")
+    res.should be_empty
+    
+    res = subject.queue_purge("my_queue")
+    res.delete(:message_count).should be_an Integer
+    res.should be_empty
+    
+    res = subject.queue_delete("my_queue", if_unused: true)
+    res.delete(:message_count).should be_an Integer
+    res.should be_empty
   end
   
 end

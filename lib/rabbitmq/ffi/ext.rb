@@ -56,6 +56,14 @@ module RabbitMQ
         else value
         end
       end
+      
+      def self.from(value)
+        obj = new
+        obj[:kind], obj[:value] = case value
+        when String; [:bytes, Bytes.from_s(value)]
+        else raise NotImplementedError
+        end
+      end
     end
     
     class Table
@@ -65,6 +73,21 @@ module RabbitMQ
           entry = FFI::TableEntry.new(entry_ptr + i * FFI::TableEntry.size)
           [entry[:key].to_s, entry[:value].to_value]
         }.to_h
+      end
+      
+      def self.from(params)
+        size      = params.size
+        entry_ptr = Util.mem_ptr(size * FFI::TableEntry.size, release: false)
+        params.each_with_index do |param, idx|
+          entry = FFI::TableEntry.new(entry_ptr + i * FFI::TableEntry.size)
+          entry[:key]   = FFI::Bytes.from_s(param.first)
+          entry[:value] = FFI::FieldValue.from(param.last)
+        end
+        
+        obj = new
+        obj[:num_entries] = size
+        obj[:entries]     = entry_ptr
+        obj
       end
     end
     
@@ -111,8 +134,11 @@ module RabbitMQ
     module MethodClassMixin
       def apply(params={})
         params.each do |key, value|
+          next if key == :dummy
           case value
           when String; value = FFI::Bytes.from_s(value)
+          when Symbol; value = FFI::Bytes.from_s(value.to_s)
+          when Hash;   value = FFI::Table.from(value)
           end
           self[key] = value
         end
@@ -121,10 +147,11 @@ module RabbitMQ
       def to_h
         result = {}
         self.members.each do |key| [key, self[key]]
+          next if key == :dummy
           value = self[key]
           case value
-          when FFI::Bytes
-            value = value.to_s
+          when FFI::Bytes; value = value.to_s
+          when FFI::Table; value = value.to_h
           end
           result[key] = value
         end
@@ -139,6 +166,7 @@ module RabbitMQ
         str.concat "}"
       end
     end
+    
     Method::MethodClasses.each { |_, kls| kls.send(:include, MethodClassMixin) }
     
   end
