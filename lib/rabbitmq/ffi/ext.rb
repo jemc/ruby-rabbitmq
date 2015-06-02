@@ -68,5 +68,41 @@ module RabbitMQ
       end
     end
     
+    class Frame
+      def payload
+        member = case self[:frame_type]
+        when :method; :method
+        when :header; :properties
+        when :body;   :body_fragment
+        else; raise NotImplementedError, "frame type: #{self[:frame_type]}"
+        end
+        self[:payload][member]
+      end
+    end
+    
+    class Method
+      MethodClasses = FFI::MethodNumber.symbols.map do |name|
+        const_name = name.to_s.gsub(/((?:\A\w)|(?:_\w))/) { |x| x[-1].upcase }
+        [name, FFI.const_get(const_name)]
+      end.to_h.freeze
+      
+      MethodNames = MethodClasses.to_a.map(&:reverse).to_h.freeze
+      
+      def decoded
+        MethodClasses.fetch(self[:id]).new(self[:decoded])
+      end
+      
+      def self.lookup(kls)
+        MethodNames.fetch(kls)
+      end
+      
+      def self.from(decoded)
+        obj = new
+        obj[:id] = lookup(decoded.class)
+        obj[:decoded] = decoded.pointer
+        obj
+      end
+    end
+    
   end
 end
