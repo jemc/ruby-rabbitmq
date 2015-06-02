@@ -28,8 +28,8 @@ module RabbitMQ
         ptr.write_string(str)
         
         bytes = new
-        bytes[:len]   = str.bytesize
-        bytes[:bytes] = Util.mem_ptr(str.bytesize, release: false)
+        bytes[:len]   = size
+        bytes[:bytes] = ptr
         bytes
       end
     end
