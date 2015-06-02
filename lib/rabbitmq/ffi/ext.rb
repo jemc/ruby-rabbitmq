@@ -18,18 +18,24 @@ module RabbitMQ
     end
     
     class Bytes
-      def to_s
-        ::FFI::Pointer.new(self[:bytes]).read_bytes(self[:len])
+      def to_s(free=false)
+        size = self[:len]
+        s = size == 0 ? "" : self[:bytes].read_bytes(size)
+        free! if free
+        s
+      end
+      
+      def free!
+        FFI.free(self[:bytes])
+        clear
       end
       
       def self.from_s(str)
         size = str.bytesize
-        ptr  = Util.mem_ptr(size, release: false)
-        ptr.write_string(str)
+        bytes = FFI.amqp_bytes_malloc(size)
         
-        bytes = new
-        bytes[:len]   = size
-        bytes[:bytes] = ptr
+        bytes[:bytes].write_string(str)
+        bytes[:len] = size
         bytes
       end
     end
@@ -43,18 +49,28 @@ module RabbitMQ
         end
       end
       
-      def to_value
-        kind  = self[:kind]
-        value = self[:value][value_member(kind)]
-        case kind
-        when :bytes;     value.to_s
-        when :utf8;      value.to_s.force_encoding(Encoding::UTF_8)
+      def to_value(free=false)
+        kind   = self[:kind]
+        value  = self[:value][value_member(kind)]
+        result = case kind
+        when :bytes;     value.to_s(free)
+        when :utf8;      value.to_s(free).force_encoding(Encoding::UTF_8)
         when :timestamp; Time.at(value / 1000.0)
-        when :table;     value.to_h
+        when :table;     value.to_h(free)
         when :array;     value.to_array_not_yet_implemented!
         when :decimal;   value.to_value_not_yet_implemented!
         else value
         end
+        
+        clear if free
+        result
+      end
+      
+      def free!
+        kind   = self[:kind]
+        value  = self[:value][value_member(kind)]
+        value.free! if value.respond_to? :free!
+        clear
       end
       
       def self.from(value)
@@ -67,12 +83,32 @@ module RabbitMQ
     end
     
     class Table
-      def to_h
+      include Enumerable
+      
+      def each(*a, &b)
         entry_ptr = self[:entries]
-        entries   = self[:num_entries].times.map { |i|
-          entry = FFI::TableEntry.new(entry_ptr + i * FFI::TableEntry.size)
-          [entry[:key].to_s, entry[:value].to_value]
-        }.to_h
+        entries   = self[:num_entries].times.map do |i|
+          FFI::TableEntry.new(entry_ptr + i * FFI::TableEntry.size)
+        end
+        entries.each(*a, &b)
+      end
+      
+      def to_h(free=false)
+        result = self.map do |entry|
+          [entry[:key].to_s(free), entry[:value].to_value(free)]
+        end.to_h
+        
+        clear if free
+        result
+      end
+      
+      def free!
+        self.each do
+          entry[:key].free!
+          entry[:value].free!
+        end
+        FFI.free(self[:entries])
+        clear
       end
       
       def self.from(params)
@@ -144,18 +180,27 @@ module RabbitMQ
         end
       end
       
-      def to_h
+      def to_h(free=false)
         result = {}
         self.members.each do |key| [key, self[key]]
           next if key == :dummy
           value = self[key]
           case value
-          when FFI::Bytes; value = value.to_s
-          when FFI::Table; value = value.to_h
+          when FFI::Bytes; value = value.to_s(free)
+          when FFI::Table; value = value.to_h(free)
           end
           result[key] = value
         end
+        
+        clear if free
         result
+      end
+      
+      def free!
+        self.values.each do |item|
+          item.free! if item.respond_to? :free!
+        end
+        clear
       end
       
       def describe

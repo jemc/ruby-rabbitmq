@@ -19,11 +19,6 @@ module RabbitMQ
       ptr
     end
     
-    def arg_ptr type, **kwargs
-      type = ::FFI::TypeDefs[type] if type.is_a?(Symbol)
-      mem_ptr(type.size, clear: false, **kwargs)
-    end
-    
     def strdup_ptr str, **kwargs
       str = str + "\x00"
       ptr = mem_ptr(str.bytesize, **kwargs)

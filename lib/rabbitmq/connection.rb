@@ -143,7 +143,9 @@ module RabbitMQ
       raise DestroyedError unless @ptr
       
       method_type = FFI::Method.lookup(method.class)
-      FFI.amqp_send_method(@ptr, channel, method_type, method.pointer)
+      status = FFI.amqp_send_method(@ptr, channel, method_type, method.pointer)
+      method.free!
+      status
     end
     
     private def fetch_next_frame(timeout=0, start=Time.now)
@@ -173,6 +175,8 @@ module RabbitMQ
       
       found = @incoming_events[channel].pop
       return found if found
+      
+      FFI.amqp_maybe_release_buffers_on_channel(@ptr, channel)
       
       while (frame = fetch_next_frame(timeout, start))
         event = frame.payload.decoded

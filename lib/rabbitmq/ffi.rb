@@ -6,6 +6,7 @@ module RabbitMQ
   module FFI
     extend ::FFI::Library
     
+    ffi_lib ::FFI::Library::LIBC
     ffi_lib \
       File.expand_path("../../ext/rabbitmq/librabbitmq.so", File.dirname(__FILE__))
     
@@ -14,7 +15,8 @@ module RabbitMQ
         blocking: true  # only necessary on MRI to deal with the GIL.
       }
       
-      # The following definition is based on library version 0.5.2
+      attach_function :free,   [:pointer], :void,    **opts
+      attach_function :malloc, [:size_t],  :pointer, **opts
       
       attach_function :amqp_version_number, [], :uint32, **opts
       attach_function :amqp_version,        [], :string, **opts
