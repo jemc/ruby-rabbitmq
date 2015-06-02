@@ -526,7 +526,7 @@ module RabbitMQ
                :no_ack,       Boolean,
                :exclusive,    Boolean,
                :nowait,       Boolean,
-               :arguments,    Bytes
+               :arguments,    Table
       end
       
       class BasicConsumeOk < ::FFI::Struct
