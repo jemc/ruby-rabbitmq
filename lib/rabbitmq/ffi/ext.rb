@@ -96,6 +96,10 @@ module RabbitMQ
         MethodNames.fetch(kls)
       end
       
+      def self.lookup_class(name)
+        MethodClasses.fetch(name)
+      end
+      
       def self.from(decoded)
         obj = new
         obj[:id] = lookup(decoded.class)
