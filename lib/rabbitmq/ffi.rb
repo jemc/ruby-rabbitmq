@@ -722,10 +722,10 @@ module RabbitMQ
       attach_function :amqp_pool_alloc,       [Pool.ptr, :size_t],            :pointer, **opts
       attach_function :amqp_pool_alloc_bytes, [Pool.ptr, :size_t, Bytes.ptr], :void,    **opts
       
-      attach_function :amqp_cstring_bytes,    [:string], Bytes, **opts
-      attach_function :amqp_bytes_malloc_dup, [Bytes],   Bytes, **opts
-      attach_function :amqp_bytes_malloc,     [:size_t], Bytes, **opts
-      attach_function :amqp_bytes_free,       [Bytes],   :void, **opts
+      attach_function :amqp_cstring_bytes,    [:string], Bytes.by_value, **opts
+      attach_function :amqp_bytes_malloc_dup, [Bytes],   Bytes.by_value, **opts
+      attach_function :amqp_bytes_malloc,     [:size_t], Bytes.by_value, **opts
+      attach_function :amqp_bytes_free,       [Bytes],   :void,          **opts
       
       attach_function :amqp_new_connection, [], ConnectionState, **opts
       attach_function :amqp_get_sockfd,         [ConnectionState],                   :int,   **opts
