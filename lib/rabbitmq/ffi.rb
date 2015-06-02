@@ -224,6 +224,13 @@ module RabbitMQ
                :decoded, :pointer
       end
       
+      FrameType = enum ::FFI::TypeDefs[:uint8], [
+        :method,    1,
+        :header,    2,
+        :body,      3,
+        :heartbeat, 8,
+      ]
+      
       class FramePayloadProperties < ::FFI::Struct
         layout :class_id,  :uint16,
                :body_size, :uint64,
@@ -245,8 +252,8 @@ module RabbitMQ
                :protocol_header, FramePayloadProtocolHeader
       end
       
-      class Frame < ::FFI::Union
-        layout :frame_type, :uint8,
+      class Frame < ::FFI::Struct
+        layout :frame_type, FrameType,
                :channel,    Channel,
                :payload,    FramePayload
       end
