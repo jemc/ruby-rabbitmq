@@ -400,7 +400,7 @@ module RabbitMQ
                :auto_delete, Boolean,
                :internal,    Boolean,
                :nowait,      Boolean,
-               :arguments,   Bytes
+               :arguments,   Table
       end
       
       class ExchangeDeclareOk < ::FFI::Struct
@@ -424,7 +424,7 @@ module RabbitMQ
                :source,      Bytes,
                :routing_key, Bytes,
                :nowait,      Boolean,
-               :arguments,   Bytes
+               :arguments,   Table
       end
       
       class ExchangeBindOk < ::FFI::Struct
@@ -437,7 +437,7 @@ module RabbitMQ
                :source,      Bytes,
                :routing_key, Bytes,
                :nowait,      Boolean,
-               :arguments,   Bytes
+               :arguments,   Table
       end
       
       class ExchangeUnbindOk < ::FFI::Struct
@@ -452,7 +452,7 @@ module RabbitMQ
                :exclusive,   Boolean,
                :auto_delete, Boolean,
                :nowait,      Boolean,
-               :arguments,   Bytes
+               :arguments,   Table
       end
       
       class QueueDeclareOk < ::FFI::Struct
@@ -467,7 +467,7 @@ module RabbitMQ
                :exchange,    Bytes,
                :routing_key, Bytes,
                :nowait,      Boolean,
-               :arguments,   Bytes
+               :arguments,   Table
       end
       
       class QueueBindOk < ::FFI::Struct
@@ -501,7 +501,7 @@ module RabbitMQ
                :queue,       Bytes,
                :exchange,    Bytes,
                :routing_key, Bytes,
-               :arguments,   Bytes
+               :arguments,   Table
       end
       
       class QueueUnbindOk < ::FFI::Struct
