@@ -32,7 +32,7 @@ file_task 'rabbitmq-c', :download => :download_tarball do
 end
 
 file_task 'config.status', :configure => :download do
-  system "bash -c 'cd #{FILES[:download]} && ./configure'"
+  system "bash -c 'cd #{FILES[:download]} && env CFLAGS=-g ./configure'"
   system "cp #{FILES[:download]}/#{FILES[:configure]} ./"
 end
 
