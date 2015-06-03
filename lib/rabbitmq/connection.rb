@@ -165,7 +165,7 @@ module RabbitMQ
       
       while (frame = fetch_next_frame!(timeout, start))
         ch_id = frame[:channel]
-        event = frame.payload.decoded
+        event = frame.payload.to_h(false)
         @incoming_events[ch_id] << event
       end
     end
@@ -179,7 +179,7 @@ module RabbitMQ
       FFI.amqp_maybe_release_buffers_on_channel(@ptr, channel)
       
       while (frame = fetch_next_frame(timeout, start))
-        event = frame.payload.decoded
+        event = frame.payload.to_h(false)
         return event if frame[:channel] == channel
         @incoming_events[frame[:channel]] << frame.payload.decoded if frame
       end

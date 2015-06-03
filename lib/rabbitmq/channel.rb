@@ -41,14 +41,11 @@ module RabbitMQ
       res = @connection.send(:fetch_event_for_channel, @id)
       raise FFI::Error::Timeout, "waiting for response to #{req.class}" unless res
       
-      res_type = FFI::Method.lookup(res.class)
-      res = res.to_h(false)
-      
       raise FFI::Error::WrongMethod,
-        "response to #{req_type} => #{res_type}\n#{res.inspect}" \
-          if expect && res_type != expect
+        "response to #{req_type} => #{res.fetch(:method)}\n#{res.inspect}" \
+          if expect && res.fetch(:method) != expect
       
-      res
+      res.fetch(:properties)
     end
     
     ##

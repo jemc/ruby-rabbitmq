@@ -147,6 +147,11 @@ module RabbitMQ
       
       MethodNames = MethodClasses.to_a.map(&:reverse).to_h.freeze
       
+      def to_h(free=false)
+        { method: self[:id],
+          properties: self.decoded.to_h(free) }
+      end
+      
       def decoded
         MethodClasses.fetch(self[:id]).new(self[:decoded])
       end
