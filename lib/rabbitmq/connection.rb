@@ -155,7 +155,11 @@ module RabbitMQ
     
     private def fetch_next_frame(timeout=0, start=Time.now)
       frame   = FFI::Frame.new
-      timeval = FFI::Timeval.from(timeout - (start-Time.now))
+      timeval = if timeout
+        timeout = timeout - (start-Time.now)
+        timeout = 0 if timeout < 0
+        FFI::Timeval.from(timeout)
+      end
       status  = FFI.amqp_simple_wait_frame_noblock(@ptr, frame, timeval)
       
       case status
