@@ -32,17 +32,16 @@ module RabbitMQ
     end
     
     private def rpc(req_type, params=[{}], expect:nil)
-      req = FFI::Method.lookup_class(req_type).new
-      req.apply(params.last)
+      properties = params.last
       
       Util.error_check :"sending a request on a channel",
-        @connection.send(:send_method, @id, req)
+        @connection.send(:send_method, @id, req_type, properties)
       
       res = @connection.send(:fetch_event_for_channel, @id)
-      raise FFI::Error::Timeout, "waiting for response to #{req.class}" unless res
+      raise FFI::Error::Timeout, "waiting for response to #{req_type}" unless res
       
       raise FFI::Error::WrongMethod,
-        "response to #{req_type} => #{res.fetch(:method)}\n#{res.inspect}" \
+        "response to #{req_type} => #{res.inspect}" \
           if expect && res.fetch(:method) != expect
       
       res.fetch(:properties)

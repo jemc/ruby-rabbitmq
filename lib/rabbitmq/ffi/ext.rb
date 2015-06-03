@@ -183,6 +183,7 @@ module RabbitMQ
           end
           self[key] = value
         end
+        self
       end
       
       def to_h(free=false)

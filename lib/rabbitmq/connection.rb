@@ -139,12 +139,12 @@ module RabbitMQ
       @released_channels.clear
     end
     
-    private def send_method(channel, method)
+    private def send_method(channel, type, properties={})
       raise DestroyedError unless @ptr
       
-      method_type = FFI::Method.lookup(method.class)
-      status = FFI.amqp_send_method(@ptr, channel, method_type, method.pointer)
-      method.free!
+      req    = FFI::Method.lookup_class(type).new.apply(properties)
+      status = FFI.amqp_send_method(@ptr, channel, type, req.pointer)
+      req.free!
       status
     end
     
