@@ -78,6 +78,11 @@ module RabbitMQ
       Channel.new(self, allocate_channel(id), pre_allocated: true)
     end
     
+    private def ptr
+      raise DestroyedError unless @ptr
+      @ptr
+    end
+    
     private def create_socket!
       raise DestroyedError unless @ptr
       
@@ -163,11 +168,22 @@ module RabbitMQ
     private def fetch_next_event(timeout=0, start=Time.now)
       frame = fetch_next_frame(timeout, start)
       return unless frame
-      
-      event = frame.to_h(false)
+      event = frame.as_method_to_h(false)
       return event unless FFI::Method.has_content?(event.fetch(:method))
       
-      raise NotImplementedError # TODO: fetch the rest of the content
+      frame = fetch_next_frame(timeout, start)
+      return unless frame
+      event.merge!(frame.as_header_to_h)
+      
+      body = ""
+      while body.size < event.fetch(:body_size)
+        frame = fetch_next_frame(timeout, start)
+        return unless frame
+        body.concat frame.as_body_to_s
+      end
+      
+      event[:body] = body
+      event
     end
     
     private def fetch_events(timeout=protocol_timeout, start=Time.now)

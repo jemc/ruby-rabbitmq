@@ -30,13 +30,17 @@ module RabbitMQ
         clear
       end
       
-      def self.from_s(str)
-        size = str.bytesize
-        bytes = FFI.amqp_bytes_malloc(size)
-        
-        bytes[:bytes].write_string(str)
-        bytes[:len] = size
-        bytes
+      def self.from_s(str, borrow=false)
+        if borrow
+          FFI.amqp_cstring_bytes(str)
+        else
+          size = str.bytesize
+          bytes = FFI.amqp_bytes_malloc(size)
+          
+          bytes[:bytes].write_string(str)
+          bytes[:len] = size
+          bytes
+        end
       end
     end
     
@@ -73,12 +77,13 @@ module RabbitMQ
         clear
       end
       
-      def self.from(value)
+      def self.from(value, borrow=false)
         obj = new
         obj[:kind], obj[:value] = case value
-        when String; [:bytes, Bytes.from_s(value)]
+        when String; [:bytes, FieldValueValue.new(Bytes.from_s(value, borrow).pointer)]
         else raise NotImplementedError
         end
+        obj
       end
     end
     
@@ -111,13 +116,13 @@ module RabbitMQ
         clear
       end
       
-      def self.from(params)
+      def self.from(params, borrow=false)
         size      = params.size
         entry_ptr = Util.mem_ptr(size * FFI::TableEntry.size, release: false)
         params.each_with_index do |param, idx|
-          entry = FFI::TableEntry.new(entry_ptr + i * FFI::TableEntry.size)
-          entry[:key]   = FFI::Bytes.from_s(param.first)
-          entry[:value] = FFI::FieldValue.from(param.last)
+          entry = FFI::TableEntry.new(entry_ptr + idx * FFI::TableEntry.size)
+          entry[:key]   = FFI::Bytes.from_s(param.first.to_s, borrow)
+          entry[:value] = FFI::FieldValue.from(param.last, borrow)
         end
         
         obj = new
@@ -165,19 +170,18 @@ module RabbitMQ
         when :basic_return;  true
         when :basic_deliver; true
         when :basic_get_ok;  true
-        else;                false
+        else                 false
         end
       end
     end
     
     module MethodClassMixin
-      def apply(params={})
+      def apply(borrow=false, **params)
         params.each do |key, value|
           next if key == :dummy
           case value
-          when String; value = FFI::Bytes.from_s(value)
-          when Symbol; value = FFI::Bytes.from_s(value.to_s)
-          when Hash;   value = FFI::Table.from(value)
+          when String; value = FFI::Bytes.from_s(value, borrow)
+          when Hash;   value = FFI::Table.from(value, borrow)
           end
           self[key] = value
         end
@@ -206,25 +210,17 @@ module RabbitMQ
         end
         clear
       end
-      
-      def describe
-        str = "#{self.class.to_s} {\n"
-        to_h.each do |key, value|
-          str.concat "  #{key}: #{value}\n"
-        end
-        str.concat "}"
-      end
     end
     
     Method::MethodClasses.each { |_, kls| kls.send(:include, MethodClassMixin) }
     
-    module MethodClassMixin; def has_content?; false; end; end
-    class  BasicPublish;     def has_content?; true;  end; end
-    class  BasicReturn;      def has_content?; true;  end; end
-    class  BasicDeliver;     def has_content?; true;  end; end
-    class  BasicGetOk;       def has_content?; true;  end; end
+    BasicProperties.send(:include, MethodClassMixin)
     
-    
+    class FramePayloadProperties
+      def decoded
+        BasicProperties.new(self[:decoded])
+      end
+    end
     
     class Frame
       def payload
@@ -237,8 +233,29 @@ module RabbitMQ
         self[:payload][member]
       end
       
-      def to_h(free=false)
+      def as_method_to_h(free=false)
+        # TODO: raise correct error class with enough info for appropriate action
+        raise "Wrong frame type for method frame of event: #{self[:frame_type]}" \
+          unless self[:frame_type] == :method
+        
         payload.to_h(free).merge(channel: self[:channel])
+      end
+      
+      def as_header_to_h(free=false)
+        # TODO: raise correct error class with enough info for appropriate action
+        raise "Wrong frame type for header frame of multiframe event: #{self[:frame_type]}" \
+          unless self[:frame_type] == :header
+        
+        properties = self[:payload][:properties]
+        { header: properties.decoded.to_h(free), body_size: properties[:body_size] }
+      end
+      
+      def as_body_to_s(free=false)
+        # TODO: raise correct error class with enough info for appropriate action
+        raise "Wrong frame type for body frame of multiframe event: #{self[:frame_type]}" \
+          unless self[:frame_type] == :body
+        
+        self[:payload][:body_fragment].to_s(free)
       end
     end
     

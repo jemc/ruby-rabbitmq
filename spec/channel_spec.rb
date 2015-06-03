@@ -139,4 +139,23 @@ describe RabbitMQ::Channel do
     res[:properties].should be_empty
   end
   
+  it "can perform message operations" do
+    subject.queue_delete("my_queue")
+    subject.queue_declare("my_queue")
+    
+    res = subject.basic_publish("message_body", "", "my_queue",
+                                persistent: true, priority: 5)
+    res.should eq true
+    
+    res = subject.basic_get("my_queue", no_ack: true)
+    res[:properties].delete(:delivery_tag) .should be_an Integer
+    res[:properties].delete(:redelivered)  .should eq false
+    res[:properties].delete(:exchange)     .should eq ""
+    res[:properties].delete(:routing_key)  .should eq "my_queue"
+    res[:properties].delete(:message_count).should eq 0
+    res[:properties].should be_empty
+    res[:header].should be_a Hash
+    res[:body].should eq "message_body"
+  end
+  
 end
