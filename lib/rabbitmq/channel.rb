@@ -44,7 +44,7 @@ module RabbitMQ
         "response to #{req_type} => #{res.inspect}" \
           if expect && res.fetch(:method) != expect
       
-      res.fetch(:properties)
+      res
     end
     
     ##
@@ -145,10 +145,10 @@ module RabbitMQ
       rpc :basic_consume, [
         queue:        queue,
         consumer_tag: consumer_tag,
-        no_local:     opts.fetch(:no_local,     false),
-        no_ack:       opts.fetch(:no_ack,       false),
-        exclusive:    opts.fetch(:exclusive,    false),
-        arguments:    opts.fetch(:arguments,    {}),
+        no_local:     opts.fetch(:no_local,  false),
+        no_ack:       opts.fetch(:no_ack,    false),
+        exclusive:    opts.fetch(:exclusive, false),
+        arguments:    opts.fetch(:arguments, {}),
       ], expect: :basic_consume_ok
     end
     

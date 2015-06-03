@@ -48,25 +48,25 @@ describe RabbitMQ::Channel do
   
   it "can perform exchange operations" do
     res = subject.exchange_delete("my_exchange")
-    res.should be_empty
+    res[:properties].should be_empty
     res = subject.exchange_delete("my_other_exchange")
-    res.should be_empty
+    res[:properties].should be_empty
     
     res = subject.exchange_declare("my_exchange", "direct", durable: true)
-    res.should be_empty
+    res[:properties].should be_empty
     res = subject.exchange_declare("my_other_exchange", "topic", durable: true)
-    res.should be_empty
+    res[:properties].should be_empty
     
     res = subject.exchange_bind("my_exchange", "my_other_exchange", routing_key: "my_key")
-    res.should be_empty
+    res[:properties].should be_empty
     
     res = subject.exchange_unbind("my_exchange", "my_other_exchange", routing_key: "my_key")
-    res.should be_empty
+    res[:properties].should be_empty
     
     res = subject.exchange_delete("my_exchange", if_unused: true)
-    res.should be_empty
+    res[:properties].should be_empty
     res = subject.exchange_delete("my_other_exchange", if_unused: true)
-    res.should be_empty
+    res[:properties].should be_empty
   end
   
   it "can perform queue operations" do
@@ -74,27 +74,27 @@ describe RabbitMQ::Channel do
     subject.exchange_declare("my_exchange", "direct", durable: true)
     
     res = subject.queue_delete("my_queue")
-    res.delete(:message_count).should be_an Integer
-    res.should be_empty
+    res[:properties].delete(:message_count).should be_an Integer
+    res[:properties].should be_empty
     
     res = subject.queue_declare("my_queue", durable: true)
-    res.delete(:queue)         .should eq "my_queue"
-    res.delete(:message_count) .should be_an Integer
-    res.delete(:consumer_count).should be_an Integer
-    res.should be_empty
+    res[:properties].delete(:queue)         .should eq "my_queue"
+    res[:properties].delete(:message_count) .should be_an Integer
+    res[:properties].delete(:consumer_count).should be_an Integer
+    res[:properties].should be_empty
     
     res = subject.queue_bind("my_queue", "my_exchange", routing_key: "my_key")
-    res.should be_empty
+    res[:properties].should be_empty
     res = subject.queue_unbind("my_queue", "my_exchange", routing_key: "my_key")
-    res.should be_empty
+    res[:properties].should be_empty
     
     res = subject.queue_purge("my_queue")
-    res.delete(:message_count).should be_an Integer
-    res.should be_empty
+    res[:properties].delete(:message_count).should be_an Integer
+    res[:properties].should be_empty
     
     res = subject.queue_delete("my_queue", if_unused: true)
-    res.delete(:message_count).should be_an Integer
-    res.should be_empty
+    res[:properties].delete(:message_count).should be_an Integer
+    res[:properties].should be_empty
   end
   
   it "can perform consumer operations" do
@@ -102,41 +102,41 @@ describe RabbitMQ::Channel do
     subject.queue_declare("my_queue")
     
     res = subject.basic_qos(prefetch_count: 10, global: true)
-    res.should be_empty
+    res[:properties].should be_empty
     
     tag = "my_consumer"
     res = subject.basic_consume("my_queue", tag, exclusive: true)
-    res.delete(:consumer_tag).should eq tag
-    res.should be_empty
+    res[:properties].delete(:consumer_tag).should eq tag
+    res[:properties].should be_empty
     
     res = subject.basic_cancel(tag)
-    res.delete(:consumer_tag).should eq tag
-    res.should be_empty
+    res[:properties].delete(:consumer_tag).should eq tag
+    res[:properties].should be_empty
     
     res = subject.basic_consume("my_queue")
-    tag = res.delete(:consumer_tag)
+    tag = res[:properties].delete(:consumer_tag)
     tag.should be_a String; tag.should_not be_empty
-    res.should be_empty
+    res[:properties].should be_empty
     
     res = subject.basic_cancel(tag)
-    res.delete(:consumer_tag).should eq tag
-    res.should be_empty
+    res[:properties].delete(:consumer_tag).should eq tag
+    res[:properties].should be_empty
   end
   
   it "can perform transaction operations" do
     res = subject.tx_select
-    res.should be_empty
+    res[:properties].should be_empty
     subject.queue_delete("my_queue")
     subject.queue_declare("my_queue")
     res = subject.tx_rollback
-    res.should be_empty
+    res[:properties].should be_empty
     
     res = subject.tx_select
-    res.should be_empty
+    res[:properties].should be_empty
     subject.queue_delete("my_queue")
     subject.queue_declare("my_queue")
     res = subject.tx_commit
-    res.should be_empty
+    res[:properties].should be_empty
   end
   
 end
