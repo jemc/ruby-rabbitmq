@@ -127,18 +127,6 @@ module RabbitMQ
       end
     end
     
-    class Frame
-      def payload
-        member = case self[:frame_type]
-        when :method; :method
-        when :header; :properties
-        when :body;   :body_fragment
-        else; raise NotImplementedError, "frame type: #{self[:frame_type]}"
-        end
-        self[:payload][member]
-      end
-    end
-    
     class Method
       MethodClasses = FFI::MethodNumber.symbols.map do |name|
         const_name = name.to_s.gsub(/((?:\A\w)|(?:_\w))/) { |x| x[-1].upcase }
@@ -169,6 +157,16 @@ module RabbitMQ
         obj[:id] = lookup(decoded.class)
         obj[:decoded] = decoded.pointer
         obj
+      end
+      
+      def self.has_content?(type)
+        case type
+        when :basic_publish; true
+        when :basic_return;  true
+        when :basic_deliver; true
+        when :basic_get_ok;  true
+        else;                false
+        end
       end
     end
     
@@ -219,6 +217,30 @@ module RabbitMQ
     end
     
     Method::MethodClasses.each { |_, kls| kls.send(:include, MethodClassMixin) }
+    
+    module MethodClassMixin; def has_content?; false; end; end
+    class  BasicPublish;     def has_content?; true;  end; end
+    class  BasicReturn;      def has_content?; true;  end; end
+    class  BasicDeliver;     def has_content?; true;  end; end
+    class  BasicGetOk;       def has_content?; true;  end; end
+    
+    
+    
+    class Frame
+      def payload
+        member = case self[:frame_type]
+        when :method; :method
+        when :header; :properties
+        when :body;   :body_fragment
+        else; raise NotImplementedError, "frame type: #{self[:frame_type]}"
+        end
+        self[:payload][member]
+      end
+      
+      def to_h(free=false)
+        payload.to_h(free).merge(channel: self[:channel])
+      end
+    end
     
   end
 end

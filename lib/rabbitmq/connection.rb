@@ -160,13 +160,23 @@ module RabbitMQ
       end
     end
     
+    private def fetch_next_event(timeout=0, start=Time.now)
+      frame = fetch_next_frame(timeout, start)
+      return unless frame
+      
+      event = frame.to_h(false)
+      return event unless FFI::Method.has_content?(event.fetch(:method))
+      
+      raise NotImplementedError # TODO: fetch the rest of the content
+    end
+    
     private def fetch_events(timeout=protocol_timeout, start=Time.now)
       raise DestroyedError unless @ptr
       
-      while (frame = fetch_next_frame!(timeout, start))
-        ch_id = frame[:channel]
-        event = frame.payload.to_h(false)
-        @incoming_events[ch_id] << event
+      FFI.amqp_maybe_release_buffers(@ptr)
+      
+      while (event = fetch_next_event(timeout, start))
+        @incoming_events[event.fetch(:channel)] << event
       end
     end
     
@@ -178,10 +188,9 @@ module RabbitMQ
       
       FFI.amqp_maybe_release_buffers_on_channel(@ptr, channel)
       
-      while (frame = fetch_next_frame(timeout, start))
-        event = frame.payload.to_h(false)
-        return event if frame[:channel] == channel
-        @incoming_events[frame[:channel]] << frame.payload.decoded if frame
+      while (event = fetch_next_event(timeout, start))
+        return event if event[:channel] == channel
+        @incoming_events[event.fetch(:channel)] << event
       end
     end
     
