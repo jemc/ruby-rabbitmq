@@ -110,20 +110,20 @@ module RabbitMQ
     end
     
     private def open_channel(id)
-      raise DestroyedError unless @ptr
+      Util.error_check :"reopening channel after server-initated closure",
+        send_method(id, :channel_open)
       
-      FFI.amqp_channel_open(@ptr, id)
-      rpc_check :"opening channel", FFI.amqp_get_rpc_reply(@ptr)
+      fetch_response(id, :channel_open_ok)
     end
     
     private def reopen_channel(id)
-      raise DestroyedError unless @ptr
-      
-      Util.error_check :"acknowledging channel closure",
+      Util.error_check :"acknowledging server-initated channel closure",
         send_method(id, :channel_close_ok)
       
-      FFI.amqp_channel_open(@ptr, id)
-      rpc_check :"reopening channel", FFI.amqp_get_rpc_reply(@ptr)
+      Util.error_check :"reopening channel after server-initated closure",
+        send_method(id, :channel_open)
+      
+      fetch_response(id, :channel_open_ok)
     end
     
     private def allocate_channel(id=nil)
