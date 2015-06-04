@@ -116,6 +116,16 @@ module RabbitMQ
       rpc_check :"opening channel", FFI.amqp_get_rpc_reply(@ptr)
     end
     
+    private def reopen_channel(id)
+      raise DestroyedError unless @ptr
+      
+      Util.error_check :"acknowledging channel closure",
+        send_method(id, :channel_close_ok)
+      
+      FFI.amqp_channel_open(@ptr, id)
+      rpc_check :"reopening channel", FFI.amqp_get_rpc_reply(@ptr)
+    end
+    
     private def allocate_channel(id=nil)
       if id
         raise ArgumentError, "channel #{id} is already in use" if @open_channels[id]

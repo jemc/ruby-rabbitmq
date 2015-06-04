@@ -158,4 +158,15 @@ describe RabbitMQ::Channel do
     res[:body].should eq "message_body"
   end
   
+  it "can recover from server-sent channel error closure" do
+    subject.queue_delete("my_queue")
+    
+    10.times do
+      expect { subject.queue_purge("my_queue") }.to \
+        raise_error RabbitMQ::ServerError::Channel::NotFound
+    end
+    
+    subject.queue_delete("my_queue")
+  end
+  
 end
