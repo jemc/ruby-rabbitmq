@@ -29,12 +29,10 @@ module RabbitMQ
       end
       
       FFI::Status.symbols.each do |status|
-        message    = RabbitMQ::FFI.amqp_error_string2(status)
-        const_name = status.to_s.gsub(/((?:\A\w)|(?:_\w))/) { |x| x[-1].upcase }
-        
+        message = RabbitMQ::FFI.amqp_error_string2(status)
         kls = Class.new(Error) { define_method(:status_message) { message } }
         lookup_table[status] = kls
-        const_set const_name, kls
+        const_set Util.const_name(status), kls
       end
     end
     

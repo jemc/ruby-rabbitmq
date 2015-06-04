@@ -3,6 +3,10 @@ module RabbitMQ
   module Util; end
   class << Util
     
+    def const_name(lowercase_name)
+      lowercase_name.to_s.gsub(/((?:\A\w)|(?:_\w))/) { |x| x[-1].upcase }
+    end
+    
     def error_check action, status
       return if status == :ok
       raise RabbitMQ::FFI::Error.lookup(status), "while #{action}"
