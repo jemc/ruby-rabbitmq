@@ -37,23 +37,7 @@ module RabbitMQ
       Util.error_check :"sending a request on a channel",
         @connection.send(:send_method, @id, req_type, properties)
       
-      res = @connection.send(:fetch_event_for_channel, @id)
-      raise FFI::Error::Timeout, "waiting for response to #{req_type}" unless res
-      
-      if expect && expect != res.fetch(:method)
-        if (exc = ServerError.from(res))
-          if exc.is_a?(ServerError::Channel)
-            connection.send(:reopen_channel, @id)
-          elsif exc.is_a?(ServerError::Connection)
-            raise NotImplementedError
-          end
-          raise exc
-        else
-          raise FFI::Error::WrongMethod, "response to #{req_type} => #{res.inspect}"
-        end
-      end
-      
-      res
+      @connection.send(:fetch_response, @id, expect)
     end
     
     ##

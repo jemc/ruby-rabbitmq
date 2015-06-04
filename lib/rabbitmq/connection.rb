@@ -224,6 +224,26 @@ module RabbitMQ
       end
     end
     
+    private def fetch_response(channel, expected, timeout=protocol_timeout, start=Time.now)
+      res = fetch_event_for_channel(channel, timeout, start)
+      raise FFI::Error::Timeout, "waiting for response to #{req_type}" unless res
+      
+      if expected != res.fetch(:method)
+        if (exc = ServerError.from(res))
+          if exc.is_a?(ServerError::Channel)
+            reopen_channel(channel)
+          elsif exc.is_a?(ServerError::Connection)
+            raise NotImplementedError
+          end
+          raise exc
+        else
+          raise FFI::Error::WrongMethod, "response to #{req_type} => #{res.inspect}"
+        end
+      end
+      
+      res
+    end
+    
     private def rpc_check action, res
       case res[:reply_type]
       when :library_exception; Util.error_check action, res[:library_error]
