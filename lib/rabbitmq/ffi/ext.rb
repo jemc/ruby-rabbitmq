@@ -9,6 +9,9 @@ module RabbitMQ
         obj[:tv_usec] = (seconds * 1_000_000).to_i
         obj
       end
+      
+      @zero = self.from(0)
+      class << self; attr_reader :zero; end
     end
     
     class ConnectionInfo
