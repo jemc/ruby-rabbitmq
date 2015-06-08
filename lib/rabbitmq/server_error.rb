@@ -9,9 +9,9 @@ module RabbitMQ
       properties = event.fetch(:properties)
       kls = case event.fetch(:method)
       when :channel_close
-        Channel.lookup_table[properties.fetch(:reply_code)]
+        ServerError::Channel.lookup_table[properties.fetch(:reply_code)]
       when :connection_close
-        Channel.lookup_table[properties.fetch(:reply_code)]
+        ServerError::Connection.lookup_table[properties.fetch(:reply_code)]
       else
         return
       end
