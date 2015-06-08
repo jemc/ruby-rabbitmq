@@ -1,4 +1,6 @@
 
+require 'socket'
+
 module RabbitMQ
   class Connection
     def initialize *args
@@ -97,6 +99,8 @@ module RabbitMQ
       create_socket!
       Util.error_check :"opening a socket",
         FFI.amqp_socket_open(@socket, host, port)
+      
+      @ruby_socket = Socket.for_fd(FFI.amqp_get_sockfd(@ptr))
     end
     
     private def login!
@@ -163,20 +167,32 @@ module RabbitMQ
       status
     end
     
-    private def fetch_next_frame(timeout=0, start=Time.now)
-      frame   = FFI::Frame.new
-      timeval = if timeout
+    private def select(timeout=0, start=Time.now)
+      if timeout
         timeout = timeout - (start-Time.now)
         timeout = 0 if timeout < 0
-        FFI::Timeval.from(timeout)
       end
-      status  = FFI.amqp_simple_wait_frame_noblock(@ptr, frame, timeval)
       
+      IO.select([@ruby_socket], [], [], timeout) ? true : false
+    end
+    
+    private def fetch_next_frame(timeout=0, start=Time.now)
+      frame  = FFI::Frame.new
+      
+      # Try fetching the next frame without a blocking call.
+      status = FFI.amqp_simple_wait_frame_noblock(@ptr, frame, FFI::Timeval.zero)
       case status
-      when :ok;      frame
-      when :timeout; nil
+      when :ok;      return frame
+      when :timeout; # do nothing and proceed to waiting on select below
       else Util.error_check :"fetching the next frame", status
       end
+      
+      # Otherwise, wait for the socket to be readable and try fetching again.
+      return nil unless select(timeout, start)
+      Util.error_check :"fetching the next frame",
+        FFI.amqp_simple_wait_frame(@ptr, frame)
+      
+      frame
     end
     
     private def fetch_next_event(timeout=0, start=Time.now)
@@ -226,7 +242,7 @@ module RabbitMQ
     
     private def fetch_response(channel, expected, timeout=protocol_timeout, start=Time.now)
       res = fetch_event_for_channel(channel, timeout, start)
-      raise FFI::Error::Timeout, "waiting for response to #{req_type}" unless res
+      raise FFI::Error::Timeout, "waiting for response" unless res
       
       if expected != res.fetch(:method)
         if (exc = ServerError.from(res))
