@@ -171,6 +171,8 @@ module RabbitMQ
       status
     end
     
+    # Block until there is readable data on the internal ruby socket,
+    # returning true if there is readable data, or false if time expired.
     private def select(timeout=0, start=Time.now)
       if timeout
         timeout = timeout - (start-Time.now)
@@ -180,6 +182,7 @@ module RabbitMQ
       IO.select([@ruby_socket], [], [], timeout) ? true : false
     end
     
+    # Return the next available frame, or nil if time expired.
     private def fetch_next_frame(timeout=0, start=Time.now)
       frame  = FFI::Frame.new
       
@@ -199,6 +202,8 @@ module RabbitMQ
       frame
     end
     
+    # Fetch the next one or more frames to form the next discrete event,
+    # returning the event as a Hash, or nil if time expired.
     private def fetch_next_event(timeout=0, start=Time.now)
       frame = fetch_next_frame(timeout, start)
       return unless frame
@@ -220,7 +225,9 @@ module RabbitMQ
       event
     end
     
-    private def handle_incoming_event(event)
+    # Dump unhandled incoming events into short-term storage buffer.
+    # Raises an exception if the incoming event is an error condition.
+    private def store_incoming_event(event)
       method = event.fetch(:method)
       
       case method
@@ -233,16 +240,8 @@ module RabbitMQ
       end
     end
     
-    private def fetch_events(timeout=protocol_timeout, start=Time.now)
-      raise DestroyedError unless @ptr
-      
-      FFI.amqp_maybe_release_buffers(@ptr)
-      
-      while (event = fetch_next_event(timeout, start))
-        handle_incoming_event(event)
-      end
-    end
-    
+    # Raise an exception if the incoming event is an error condition.
+    # Also takes any necessary action to preserve the connection/channel.
     private def raise_if_server_error!(event)
       if (exc = ServerError.from(event))
         if exc.is_a?(ServerError::Channel)
@@ -251,6 +250,16 @@ module RabbitMQ
           raise NotImplementedError
         end
         raise exc
+      end
+    end
+    
+    private def fetch_events(timeout=protocol_timeout, start=Time.now)
+      raise DestroyedError unless @ptr
+      
+      FFI.amqp_maybe_release_buffers(@ptr)
+      
+      while (event = fetch_next_event(timeout, start))
+        store_incoming_event(event)
       end
     end
     
@@ -265,7 +274,7 @@ module RabbitMQ
       while (event = fetch_next_event(timeout, start))
         return event if event.fetch(:channel) == channel \
                      && event.fetch(:method)  == method
-        handle_incoming_event(event)
+        store_incoming_event(event)
       end
       
       raise FFI::Error::Timeout, "waiting for response"
