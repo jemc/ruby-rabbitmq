@@ -106,9 +106,13 @@ module RabbitMQ
     private def login!
       raise DestroyedError unless @ptr
       
-      rpc_check :"logging in",
-        FFI.amqp_login(@ptr, vhost, max_channels, max_frame_size,
-          heartbeat_interval, :plain, :string, user, :string, password)
+      res = FFI.amqp_login(@ptr, vhost, max_channels, max_frame_size,
+        heartbeat_interval, :plain, :string, user, :string, password)
+      
+      case res[:reply_type]
+      when :library_exception; Util.error_check :"logging in", res[:library_error]
+      when :server_exception;  raise NotImplementedError
+      end
       
       @server_properties = FFI::Table.new(FFI.amqp_get_server_properties(@ptr)).to_h
     end
@@ -265,14 +269,6 @@ module RabbitMQ
       end
       
       raise FFI::Error::Timeout, "waiting for response"
-    end
-    
-    private def rpc_check action, res
-      case res[:reply_type]
-      when :library_exception; Util.error_check action, res[:library_error]
-      when :server_exception;  raise NotImplementedError
-      else res
-      end
     end
   end
 end
