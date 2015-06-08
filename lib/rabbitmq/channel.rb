@@ -33,11 +33,8 @@ module RabbitMQ
     
     private def rpc(req_type, params=[{}], expect:nil)
       properties = params.last
-      
-      Util.error_check :"sending a request on a channel",
-        @connection.send(:send_method, @id, req_type, properties)
-      
-      @connection.send(:fetch_response, @id, expect)
+      @connection.send_request(@id, req_type, properties)
+      @connection.fetch_response(@id, expect)
     end
     
     ##

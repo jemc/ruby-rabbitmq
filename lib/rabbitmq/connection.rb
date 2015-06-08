@@ -76,6 +76,37 @@ module RabbitMQ
       self
     end
     
+    # Send a request on the given channel with the given type and properties.
+    #
+    # @param channel_id [Integer] The channel number to send on.
+    # @param method [Symbol] The protocol method to send.
+    # @param properties [Hash] The properties to apply to the method.
+    # @raise [RabbitMQ::FFI::Error] if a library exception occurs.
+    #
+    def send_request(channel_id, method, properties={})
+      Util.error_check :"sending a request",
+        send_request_internal(Integer(channel_id), method.to_sym, properties)
+      
+      nil
+    end
+    
+    # Wait for a specific response on the given channel of the given type
+    # and return the event data for the response when it is received.
+    # Any other events received will be processed or stored internally.
+    #
+    # @param channel_id [Integer] The channel number to watch for.
+    # @param method [Symbol] The protocol method to watch for.
+    # @param timeout [Float] The maximum time to wait for a response;
+    #   uses the value of {#protocol_timeout} by default.
+    # @raise [RabbitMQ::ServerError] if any error event is received.
+    # @raise [RabbitMQ::FFI::Error::Timeout] if no event is received.
+    # @raise [RabbitMQ::FFI::Error] if a library exception occurs.
+    # @return [Hash] the response data received.
+    #
+    def fetch_response(channel_id, type, timeout=protocol_timeout)
+      fetch_response_event(Integer(channel_id), type.to_sym, Float(timeout))
+    end
+    
     def channel(id=nil)
       Channel.new(self, allocate_channel(id), pre_allocated: true)
     end
@@ -119,17 +150,17 @@ module RabbitMQ
     
     private def open_channel(id)
       Util.error_check :"opening a new channel",
-        send_method(id, :channel_open)
+        send_request_internal(id, :channel_open)
       
       fetch_response(id, :channel_open_ok)
     end
     
     private def reopen_channel(id)
       Util.error_check :"acknowledging server-initated channel closure",
-        send_method(id, :channel_close_ok)
+        send_request_internal(id, :channel_close_ok)
       
       Util.error_check :"reopening channel after server-initated closure",
-        send_method(id, :channel_open)
+        send_request_internal(id, :channel_open)
       
       fetch_response(id, :channel_open_ok)
     end
@@ -160,15 +191,6 @@ module RabbitMQ
     private def release_all_channels
       @open_channels.clear
       @released_channels.clear
-    end
-    
-    private def send_method(channel, type, properties={})
-      raise DestroyedError unless @ptr
-      
-      req    = FFI::Method.lookup_class(type).new.apply(properties)
-      status = FFI.amqp_send_method(@ptr, channel, type, req.pointer)
-      req.free!
-      status
     end
     
     # Block until there is readable data on the internal ruby socket,
@@ -263,7 +285,7 @@ module RabbitMQ
       end
     end
     
-    private def fetch_response(channel, method, timeout=protocol_timeout, start=Time.now)
+    private def fetch_response_event(channel, method, timeout=protocol_timeout, start=Time.now)
       raise DestroyedError unless @ptr
       
       found = @incoming_events[channel].delete(method)
@@ -278,6 +300,16 @@ module RabbitMQ
       end
       
       raise FFI::Error::Timeout, "waiting for response"
+    end
+    
+    private def send_request_internal(channel_id, method, properties={})
+      raise DestroyedError unless @ptr
+      
+      req    = FFI::Method.lookup_class(method).new.apply(properties)
+      status = FFI.amqp_send_method(@ptr, channel_id, method, req.pointer)
+      
+      req.free!
+      status
     end
   end
 end
