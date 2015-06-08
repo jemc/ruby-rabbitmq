@@ -9,7 +9,7 @@ module RabbitMQ
       
       @open_channels     = {}
       @released_channels = {}
-      @incoming_events   = Hash.new { |h,k| h[k] = [] }
+      @incoming_events   = Hash.new { |h,k| h[k] = {} }
       
       create_socket!
       
@@ -216,48 +216,55 @@ module RabbitMQ
       event
     end
     
+    private def handle_incoming_event(event)
+      method = event.fetch(:method)
+      
+      case method
+      when :channel_close
+        raise_if_server_error!(event)
+      when :connection_close
+        raise_if_server_error!(event)
+      else
+        @incoming_events[event.fetch(:channel)][method] = event
+      end
+    end
+    
     private def fetch_events(timeout=protocol_timeout, start=Time.now)
       raise DestroyedError unless @ptr
       
       FFI.amqp_maybe_release_buffers(@ptr)
       
       while (event = fetch_next_event(timeout, start))
-        @incoming_events[event.fetch(:channel)] << event
+        handle_incoming_event(event)
       end
     end
     
-    private def fetch_event_for_channel(channel, timeout=protocol_timeout, start=Time.now)
+    private def raise_if_server_error!(event)
+      if (exc = ServerError.from(event))
+        if exc.is_a?(ServerError::Channel)
+          reopen_channel(event.fetch(:channel))
+        elsif exc.is_a?(ServerError::Connection)
+          raise NotImplementedError
+        end
+        raise exc
+      end
+    end
+    
+    private def fetch_response(channel, method, timeout=protocol_timeout, start=Time.now)
       raise DestroyedError unless @ptr
       
-      found = @incoming_events[channel].pop
+      found = @incoming_events[channel].delete(method)
       return found if found
       
       FFI.amqp_maybe_release_buffers_on_channel(@ptr, channel)
       
       while (event = fetch_next_event(timeout, start))
-        return event if event[:channel] == channel
-        @incoming_events[event.fetch(:channel)] << event
-      end
-    end
-    
-    private def fetch_response(channel, expected, timeout=protocol_timeout, start=Time.now)
-      res = fetch_event_for_channel(channel, timeout, start)
-      raise FFI::Error::Timeout, "waiting for response" unless res
-      
-      if expected != res.fetch(:method)
-        if (exc = ServerError.from(res))
-          if exc.is_a?(ServerError::Channel)
-            reopen_channel(channel)
-          elsif exc.is_a?(ServerError::Connection)
-            raise NotImplementedError
-          end
-          raise exc
-        else
-          raise FFI::Error::WrongMethod, "response to #{req_type} => #{res.inspect}"
-        end
+        return event if event.fetch(:channel) == channel \
+                     && event.fetch(:method)  == method
+        handle_incoming_event(event)
       end
       
-      res
+      raise FFI::Error::Timeout, "waiting for response"
     end
     
     private def rpc_check action, res
