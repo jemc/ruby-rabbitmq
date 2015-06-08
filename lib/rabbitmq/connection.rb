@@ -114,7 +114,7 @@ module RabbitMQ
     end
     
     private def open_channel(id)
-      Util.error_check :"reopening channel after server-initated closure",
+      Util.error_check :"opening a new channel",
         send_method(id, :channel_open)
       
       fetch_response(id, :channel_open_ok)
