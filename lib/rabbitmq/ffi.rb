@@ -373,7 +373,7 @@ module RabbitMQ
         layout :reply_code, :uint16,
                :reply_text, Bytes,
                :class_id,   :uint16,
-               :method_id,  MethodNumber
+               :method_id,  :uint16
       end
       
       class ChannelCloseOk < ::FFI::Struct

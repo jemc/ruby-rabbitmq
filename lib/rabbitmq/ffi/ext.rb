@@ -203,6 +203,12 @@ module RabbitMQ
           result[key] = value
         end
         
+        # TODO: handle the inverse case of this transformation in apply method
+        if (method_id = result.delete(:method_id))
+          method_num = (result.delete(:class_id) << 16) + method_id
+          result[:method] = FFI::MethodNumber[method_num]
+        end
+        
         clear if free
         result
       end
