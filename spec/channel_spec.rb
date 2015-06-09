@@ -148,6 +148,7 @@ describe RabbitMQ::Channel do
     res.should eq true
     
     res = subject.basic_get("my_queue", no_ack: true)
+    res[:method].should eq :basic_get_ok
     res[:properties].delete(:delivery_tag) .should be_an Integer
     res[:properties].delete(:redelivered)  .should eq false
     res[:properties].delete(:exchange)     .should eq ""
@@ -156,6 +157,13 @@ describe RabbitMQ::Channel do
     res[:properties].should be_empty
     res[:header].should be_a Hash
     res[:body].should eq "message_body"
+    
+    res = subject.basic_get("my_queue", no_ack: true)
+    res[:method].should eq :basic_get_empty
+    res[:properties].delete(:cluster_id).should be_a String
+    res[:properties].should be_empty
+    res.has_key?(:header).should_not be
+    res.has_key?(:body).should_not be
   end
   
   it "can consume messages from basic_deliver" do

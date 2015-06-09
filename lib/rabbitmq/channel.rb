@@ -197,7 +197,7 @@ module RabbitMQ
       rpc :basic_get, [
         queue:  queue,
         no_ack: opts.fetch(:no_ack, false),
-      ], :basic_get_ok
+      ], [:basic_get_ok, :basic_get_empty]
     end
     
     def basic_ack(delivery_tag, **opts)

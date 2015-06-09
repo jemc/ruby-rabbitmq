@@ -96,7 +96,7 @@ module RabbitMQ
     # Any other events received will be processed or stored internally.
     #
     # @param channel_id [Integer] The channel number to watch for.
-    # @param method [Symbol] The type of protocol method to watch for.
+    # @param method [Symbol,Array<Symbol>] The protocol method(s) to watch for.
     # @param timeout [Float] The maximum time to wait for a response in seconds;
     #   uses the value of {#protocol_timeout} by default.
     # @raise [RabbitMQ::ServerError] if any error event is received.
@@ -105,7 +105,8 @@ module RabbitMQ
     # @return [Hash] the response data received.
     #
     def fetch_response(channel_id, method, timeout=protocol_timeout)
-      fetch_response_event(Integer(channel_id), method.to_sym, Float(timeout))
+      methods = Array(method).map(&:to_sym)
+      fetch_response_internal(Integer(channel_id), methods, Float(timeout))
     end
     
     # Register a handler for events on the given channel of the given type.
@@ -345,18 +346,20 @@ module RabbitMQ
       end
     end
     
-    private def fetch_response_event(channel, method, timeout=protocol_timeout, start=Time.now)
+    private def fetch_response_internal(channel, methods, timeout=protocol_timeout, start=Time.now)
       raise DestroyedError unless @ptr
       
-      found = @incoming_events[channel].delete(method)
-      return found if found
+      methods.each do |method|
+        found = @incoming_events[channel].delete(method)
+        return found if found
+      end
       
       FFI.amqp_maybe_release_buffers_on_channel(@ptr, channel)
       
       while (event = fetch_next_event(timeout, start))
         handle_incoming_event(event)
-        return event if event.fetch(:channel) == channel \
-                     && event.fetch(:method)  == method
+        return event if channel == event.fetch(:channel) \
+                     && methods.include?(event.fetch(:method))
         store_incoming_event(event)
       end
       
