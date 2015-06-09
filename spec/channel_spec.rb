@@ -162,14 +162,16 @@ describe RabbitMQ::Channel do
     subject.queue_delete("my_queue")
     subject.queue_declare("my_queue")
     
+    # Publish some messages to the queue
     10.times do |i|
       subject.basic_publish("message_#{i}", "", "my_queue")
     end
     
-    # TODO: show manual ack in example
-    res = subject.basic_consume("my_queue", no_ack: true, exclusive: false)
+    # Negotiate this channel as a consumer of the queue
+    res = subject.basic_consume("my_queue", exclusive: false)
     res[:method].should eq :basic_consume_ok
     
+    # Set up a handler to consume and test the messages delivered
     counter = 0
     subject.on :basic_deliver do |res|
       consumer_tag = res[:properties].delete(:consumer_tag)
@@ -186,9 +188,20 @@ describe RabbitMQ::Channel do
       res[:header].should be_a Hash
       res[:body].should eq "message_#{counter}"
       
+      # Test a mixture of the acknowledgement types
+      res = if counter.odd?
+        subject.basic_ack(delivery_tag, multiple: false)
+      elsif (counter/2).odd?
+        subject.basic_nack(delivery_tag, multiple: false, requeue: false)
+      else
+        subject.basic_reject(delivery_tag, requeue: false)
+      end
+      res.should eq true
+      
       subject.break! if (counter += 1) == 10
     end
     
+    # Run the event loop to actually consume all messages
     subject.run_loop!
     counter.should eq 10
   end

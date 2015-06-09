@@ -59,7 +59,11 @@ module RabbitMQ
     
     private def rpc(request_type, params=[{}], response_type)
       @connection.send_request(@id, request_type, params.last)
-      @connection.fetch_response(@id, response_type)
+      if response_type
+        @connection.fetch_response(@id, response_type)
+      else
+        true
+      end
     end
     
     ##
@@ -194,6 +198,28 @@ module RabbitMQ
         queue:  queue,
         no_ack: opts.fetch(:no_ack, false),
       ], :basic_get_ok
+    end
+    
+    def basic_ack(delivery_tag, **opts)
+      rpc :basic_ack, [
+        delivery_tag: delivery_tag,
+        multiple:     opts.fetch(:multiple, false),
+      ], nil
+    end
+    
+    def basic_nack(delivery_tag, **opts)
+      rpc :basic_nack, [
+        delivery_tag: delivery_tag,
+        multiple:     opts.fetch(:multiple, false),
+        requeue:      opts.fetch(:requeue, true),
+      ], nil
+    end
+    
+    def basic_reject(delivery_tag, **opts)
+      rpc :basic_reject, [
+        delivery_tag: delivery_tag,
+        requeue:      opts.fetch(:requeue, true),
+      ], nil
     end
     
     def basic_publish(body, exchange, routing_key, **opts)
