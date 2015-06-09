@@ -5,6 +5,8 @@ module RabbitMQ
     attr_reader :connection
     attr_reader :id
     
+    # Don't create a {Channel} directly; call {Connection#channel} instead.
+    # @api private
     def initialize(connection, id, pre_allocated: false)
       @connection = connection
       @id         = id
@@ -14,6 +16,14 @@ module RabbitMQ
       ObjectSpace.define_finalizer self, @finalizer
     end
     
+    # Release the channel id to be reallocated to another {Channel} instance.
+    # This will be called automatically by the object finalizer after
+    # the object becomes unreachable by the VM and is garbage collected,
+    # but you may want to call it explicitly if you plan to reuse the same
+    # channel if in another {Channel} instance explicitly.
+    #
+    # @return [Channel] self.
+    #
     def release
       if @finalizer
         @finalizer.call
@@ -24,7 +34,8 @@ module RabbitMQ
       self
     end
     
-    # @private
+    # Create a finalizer not entangled with the {Channel} instance.
+    # @api private
     def self.create_finalizer_for(connection, id)
       Proc.new do
         connection.send(:release_channel, id)
