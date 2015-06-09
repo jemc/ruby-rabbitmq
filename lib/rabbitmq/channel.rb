@@ -42,10 +42,9 @@ module RabbitMQ
       end
     end
     
-    private def rpc(req_type, params=[{}], expect:nil)
-      properties = params.last
-      @connection.send_request(@id, req_type, properties)
-      @connection.fetch_response(@id, expect)
+    private def rpc(request_type, params=[{}], response_type)
+      @connection.send_request(@id, request_type, params.last)
+      @connection.fetch_response(@id, response_type)
     end
     
     ##
@@ -59,14 +58,14 @@ module RabbitMQ
         durable:     opts.fetch(:durable,     false),
         auto_delete: opts.fetch(:auto_delete, false),
         internal:    opts.fetch(:internal,    false),
-      ], expect: :exchange_declare_ok
+      ], :exchange_declare_ok
     end
     
     def exchange_delete(name, **opts)
       rpc :exchange_delete, [
         exchange:  name,
         if_unused: opts.fetch(:if_unused, false),
-      ], expect: :exchange_delete_ok
+      ], :exchange_delete_ok
     end
     
     def exchange_bind(source, destination, **opts)
@@ -75,7 +74,7 @@ module RabbitMQ
         destination: destination,
         routing_key: opts.fetch(:routing_key, ""),
         arguments:   opts.fetch(:arguments,   {}),
-      ], expect: :exchange_bind_ok
+      ], :exchange_bind_ok
     end
     
     def exchange_unbind(source, destination, **opts)
@@ -84,7 +83,7 @@ module RabbitMQ
         destination: destination,
         routing_key: opts.fetch(:routing_key, ""),
         arguments:   opts.fetch(:arguments,   {}),
-      ], expect: :exchange_unbind_ok
+      ], :exchange_unbind_ok
     end
     
     ##
@@ -98,7 +97,7 @@ module RabbitMQ
         exclusive:   opts.fetch(:exclusive,   false),
         auto_delete: opts.fetch(:auto_delete, false),
         arguments:   opts.fetch(:arguments,   {}),
-      ], expect: :queue_declare_ok
+      ], :queue_declare_ok
     end
     
     def queue_bind(name, exchange, **opts)
@@ -107,7 +106,7 @@ module RabbitMQ
         exchange:    exchange,
         routing_key: opts.fetch(:routing_key, ""),
         arguments:   opts.fetch(:arguments,   {}),
-      ], expect: :queue_bind_ok
+      ], :queue_bind_ok
     end
     
     def queue_unbind(name, exchange, **opts)
@@ -116,11 +115,11 @@ module RabbitMQ
         exchange:    exchange,
         routing_key: opts.fetch(:routing_key, ""),
         arguments:   opts.fetch(:arguments,   {}),
-      ], expect: :queue_unbind_ok
+      ], :queue_unbind_ok
     end
     
     def queue_purge(name)
-      rpc :queue_purge, [queue: name], expect: :queue_purge_ok
+      rpc :queue_purge, [queue: name], :queue_purge_ok
     end
     
     def queue_delete(name, **opts)
@@ -128,7 +127,7 @@ module RabbitMQ
         queue:     name,
         if_unused: opts.fetch(:if_unused, false),
         if_empty:  opts.fetch(:if_empty,  false),
-      ], expect: :queue_delete_ok
+      ], :queue_delete_ok
     end
     
     ##
@@ -139,7 +138,7 @@ module RabbitMQ
         prefetch_count: opts.fetch(:prefetch_count, 0),
         prefetch_size:  opts.fetch(:prefetch_size,  0),
         global:         opts.fetch(:global,         false),
-      ], expect: :basic_qos_ok
+      ], :basic_qos_ok
     end
     
     def basic_consume(queue, consumer_tag="", **opts)
@@ -150,26 +149,26 @@ module RabbitMQ
         no_ack:       opts.fetch(:no_ack,    false),
         exclusive:    opts.fetch(:exclusive, false),
         arguments:    opts.fetch(:arguments, {}),
-      ], expect: :basic_consume_ok
+      ], :basic_consume_ok
     end
     
     def basic_cancel(consumer_tag)
-      rpc :basic_cancel, [consumer_tag: consumer_tag], expect: :basic_cancel_ok
+      rpc :basic_cancel, [consumer_tag: consumer_tag], :basic_cancel_ok
     end
     
     ##
     # Transaction operations
     
     def tx_select
-      rpc :tx_select, expect: :tx_select_ok
+      rpc :tx_select, [], :tx_select_ok
     end
     
     def tx_commit
-      rpc :tx_commit, expect: :tx_commit_ok
+      rpc :tx_commit, [], :tx_commit_ok
     end
     
     def tx_rollback
-      rpc :tx_rollback, expect: :tx_rollback_ok
+      rpc :tx_rollback, [], :tx_rollback_ok
     end
     
     ##
@@ -179,7 +178,7 @@ module RabbitMQ
       rpc :basic_get, [
         queue:  queue,
         no_ack: opts.fetch(:no_ack, false),
-      ], expect: :basic_get_ok
+      ], :basic_get_ok
     end
     
     def basic_publish(body, exchange, routing_key, **opts)
