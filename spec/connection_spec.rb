@@ -131,4 +131,104 @@ describe RabbitMQ::Connection do
     subject.fetch_response(11, :channel_open_ok)
   end
   
+  describe "register_handler" do
+    before { subject.start }
+    let(:bucket) { [] }
+    
+    it "requires a block or callable to be given as the handler" do
+      expect { subject.on_event(11, :channel_open_ok) }.to \
+        raise_error ArgumentError, /block or callable/
+    end
+    
+    shared_examples "handling events" do
+      it "calls the handler for uncaught events" do
+        subject.send_request(11, :channel_open)
+        subject.run_loop!
+        
+        bucket.should_not be_empty
+        event = bucket.pop
+        event.fetch(:method).should eq :channel_open_ok
+        event.fetch(:channel).should eq 11
+        bucket.should be_empty
+      end
+      
+      it "calls the handler for an caught events" do
+        subject.on_event(11, :channel_open_ok) do |event|
+          bucket << event
+          subject.break!
+        end
+        
+        subject.send_request(11, :channel_open)
+        subject.fetch_response(11, :channel_open_ok)
+        
+        bucket.should_not be_empty
+        event = bucket.pop
+        event.fetch(:method).should eq :channel_open_ok
+        event.fetch(:channel).should eq 11
+        bucket.should be_empty
+      end
+      
+      it "tolerates unecessary/nonsensical calls to break!" do
+        subject.break!
+        subject.break!
+        
+        subject.send_request(11, :channel_open)
+        subject.run_loop!
+        
+        bucket.should_not be_empty
+        event = bucket.pop
+        event.fetch(:method).should eq :channel_open_ok
+        event.fetch(:channel).should eq 11
+        bucket.should be_empty
+      end
+      
+      it "calls the event multiple times" do
+        subject.break!
+        subject.break!
+        
+        subject.send_request(11, :channel_open)
+        subject.run_loop!
+        
+        4.times do
+          subject.send_request(11, :channel_close)
+          subject.fetch_response(11, :channel_close_ok)
+          subject.send_request(11, :channel_open)
+          subject.run_loop!
+        end
+        
+        bucket.should_not be_empty
+        5.times do
+          event = bucket.pop
+          event.fetch(:method).should eq :channel_open_ok
+          event.fetch(:channel).should eq 11
+        end
+        bucket.should be_empty
+      end
+    end
+    
+    context "when given a block handler" do
+      before do
+        subject.on_event(11, :channel_open_ok) do |event|
+          bucket << event
+          subject.break!
+        end
+      end
+      
+      include_examples "handling events"
+    end
+      
+    context "when given a callable handler" do
+      before do
+        subject, bucket = subject(), bucket()
+        callable = Object.new
+        callable.define_singleton_method(:call) do |event|
+          bucket << event
+          subject.break!
+        end
+        subject.on_event(11, :channel_open_ok, callable)
+      end
+      
+      include_examples "handling events"
+    end
+  end
 end
