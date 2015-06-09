@@ -177,6 +177,7 @@ module RabbitMQ
         FFI.amqp_socket_open(@socket, host, port)
       
       @ruby_socket = Socket.for_fd(FFI.amqp_get_sockfd(@ptr))
+      @ruby_socket.autoclose = false
     end
     
     private def login!
