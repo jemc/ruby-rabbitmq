@@ -263,13 +263,13 @@ module RabbitMQ
     end
     
     # Raise an exception if the incoming event is an error condition.
-    # Also takes any necessary action to preserve the connection/channel.
+    # Also takes action to reopen the channel or close the connection.
     private def raise_if_server_error!(event)
       if (exc = ServerError.from(event))
         if exc.is_a?(ServerError::Channel)
-          reopen_channel(event.fetch(:channel))
+          reopen_channel(event.fetch(:channel)) # recover by reopening the channel
         elsif exc.is_a?(ServerError::Connection)
-          raise NotImplementedError
+          close # can't recover here - close and let the user recover manually
         end
         raise exc
       end

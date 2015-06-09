@@ -113,4 +113,22 @@ describe RabbitMQ::Connection do
     end
   end
   
+  it "closes itself from server-sent connection error closure" do
+    # Start the connection and the channel
+    subject.start
+    subject.send_request(11, :channel_open)
+    subject.fetch_response(11, :channel_open_ok)
+    
+    # Try to open the same channel again - causes a connection error
+    expect {
+      subject.send_request(11, :channel_open)
+      subject.fetch_response(11, :channel_open_ok)
+    }.to raise_error RabbitMQ::ServerError::Connection::CommandInvalid
+    
+    # Recover the connection and the channel
+    subject.start
+    subject.send_request(11, :channel_open)
+    subject.fetch_response(11, :channel_open_ok)
+  end
+  
 end
