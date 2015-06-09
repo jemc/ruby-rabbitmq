@@ -35,13 +35,13 @@ module RabbitMQ
     end
     
     # @see {Connection#on_event}
-    def on(event_type, callable=nil, &block)
-      @connection.on_event(@id, event_type, callable, &block)
+    def on(*args, &block)
+      @connection.on_event(@id, *args, &block)
     end
     
     # @see {Connection#run_loop!}
-    def run_loop!
-      @connection.run_loop!
+    def run_loop!(*args)
+      @connection.run_loop!(*args)
     end
     
     # @see {Connection#break!}
