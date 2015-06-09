@@ -349,10 +349,10 @@ module RabbitMQ
     private def fetch_response_internal(channel, methods, timeout=protocol_timeout, start=Time.now)
       raise DestroyedError unless @ptr
       
-      methods.each do |method|
+      methods.each { |method|
         found = @incoming_events[channel].delete(method)
         return found if found
-      end
+      }
       
       FFI.amqp_maybe_release_buffers_on_channel(@ptr, channel)
       
