@@ -123,7 +123,7 @@ describe RabbitMQ::Connection do
     expect {
       subject.send_request(11, :channel_open)
       subject.fetch_response(11, :channel_open_ok)
-    }.to raise_error RabbitMQ::ServerError::Connection::CommandInvalid
+    }.to raise_error RabbitMQ::ServerError::ConnectionError::CommandInvalid
     
     # Recover the connection and the channel
     subject.start

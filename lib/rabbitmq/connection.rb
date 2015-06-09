@@ -324,9 +324,9 @@ module RabbitMQ
     # Also takes action to reopen the channel or close the connection.
     private def raise_if_server_error!(event)
       if (exc = ServerError.from(event))
-        if exc.is_a?(ServerError::Channel)
+        if exc.is_a?(ServerError::ChannelError)
           reopen_channel(event.fetch(:channel)) # recover by reopening the channel
-        elsif exc.is_a?(ServerError::Connection)
+        elsif exc.is_a?(ServerError::ConnectionError)
           close # can't recover here - close and let the user recover manually
         end
         raise exc

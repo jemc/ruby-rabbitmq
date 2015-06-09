@@ -9,9 +9,9 @@ module RabbitMQ
       properties = event.fetch(:properties)
       kls = case event.fetch(:method)
       when :channel_close
-        ServerError::Channel.lookup_table[properties.fetch(:reply_code)]
+        ChannelError.lookup_table[properties.fetch(:reply_code)]
       when :connection_close
-        ServerError::Connection.lookup_table[properties.fetch(:reply_code)]
+        ConnectionError.lookup_table[properties.fetch(:reply_code)]
       else
         return
       end
@@ -22,7 +22,7 @@ module RabbitMQ
     
     attr_writer :event
     
-    class Channel < ServerError
+    class ChannelError < ServerError
       @lookup_table = {}
       {
         311 => :content_too_large,
@@ -38,7 +38,7 @@ module RabbitMQ
       end
     end
     
-    class Connection < ServerError
+    class ConnectionError < ServerError
       @lookup_table = {}
       {
         320 => :connection_forced,

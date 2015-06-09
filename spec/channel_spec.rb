@@ -211,7 +211,7 @@ describe RabbitMQ::Channel do
     
     10.times do
       expect { subject.queue_purge("my_queue") }.to \
-        raise_error RabbitMQ::ServerError::Channel::NotFound
+        raise_error RabbitMQ::ServerError::ChannelError::NotFound
     end
     
     subject.queue_delete("my_queue")
