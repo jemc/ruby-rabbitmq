@@ -158,6 +158,41 @@ describe RabbitMQ::Channel do
     res[:body].should eq "message_body"
   end
   
+  it "can consume messages from basic_deliver" do
+    subject.queue_delete("my_queue")
+    subject.queue_declare("my_queue")
+    
+    10.times do |i|
+      subject.basic_publish("message_#{i}", "", "my_queue")
+    end
+    
+    # TODO: show manual ack in example
+    res = subject.basic_consume("my_queue", no_ack: true, exclusive: false)
+    res[:method].should eq :basic_consume_ok
+    
+    counter = 0
+    subject.on :basic_deliver do |res|
+      consumer_tag = res[:properties].delete(:consumer_tag)
+      consumer_tag.should be_a String; consumer_tag.should_not be_empty
+      
+      delivery_tag = res[:properties].delete(:delivery_tag)
+      delivery_tag.should be_an Integer
+      
+      res[:method].should eq :basic_deliver
+      res[:properties].delete(:redelivered).should eq false
+      res[:properties].delete(:exchange)   .should eq ""
+      res[:properties].delete(:routing_key).should eq "my_queue"
+      res[:properties].should be_empty
+      res[:header].should be_a Hash
+      res[:body].should eq "message_#{counter}"
+      
+      subject.break! if (counter += 1) == 10
+    end
+    
+    subject.run_loop!
+    counter.should eq 10
+  end
+  
   it "can recover from server-sent channel error closure" do
     subject.queue_delete("my_queue")
     

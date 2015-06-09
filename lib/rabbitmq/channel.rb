@@ -34,6 +34,21 @@ module RabbitMQ
       self
     end
     
+    # @see {Connection#on_event}
+    def on(event_type, callable=nil, &block)
+      @connection.on_event(@id, event_type, callable, &block)
+    end
+    
+    # @see {Connection#run_loop!}
+    def run_loop!
+      @connection.run_loop!
+    end
+    
+    # @see {Connection#break!}
+    def break!
+      @connection.break!
+    end
+    
     # Create a finalizer not entangled with the {Channel} instance.
     # @api private
     def self.create_finalizer_for(connection, id)
