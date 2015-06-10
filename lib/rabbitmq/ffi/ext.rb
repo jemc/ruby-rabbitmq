@@ -181,11 +181,12 @@ module RabbitMQ
     module MethodClassMixin
       def apply(borrow=false, **params)
         params.each do |key, value|
-          next if key == :dummy
+          next if value.nil? || !writable_key?(key)
           case value
           when String; value = FFI::Bytes.from_s(value, borrow)
           when Hash;   value = FFI::Table.from(value, borrow)
           end
+          key_applied_hook(key)
           self[key] = value
         end
         self
@@ -194,7 +195,7 @@ module RabbitMQ
       def to_h(free=false)
         result = {}
         self.members.each do |key| [key, self[key]]
-          next if key == :dummy
+          next unless readable_key?(key)
           value = self[key]
           case value
           when FFI::Bytes; value = value.to_s(free)
@@ -219,11 +220,42 @@ module RabbitMQ
         end
         clear
       end
+      
+      def key_applied_hook(key)
+        # do nothing here
+      end
+      
+      def readable_key?(key)
+        key != :dummy
+      end
+      
+      def writable_key?(key)
+        key != :dummy
+      end
     end
     
     Method::MethodClasses.each { |_, kls| kls.send(:include, MethodClassMixin) }
     
     BasicProperties.send(:include, MethodClassMixin)
+    
+    class BasicProperties
+      def key_applied_hook(key)
+        flag_bit = FLAGS[key]
+        return unless flag_bit
+        self[:_flags] = (self[:_flags] | flag_bit)
+      end
+      
+      def readable_key?(key)
+        return false if key == :_flags
+        flag_bit = FLAGS[key]
+        return true unless flag_bit
+        return (flag_bit & self[:_flags]) != 0
+      end
+      
+      def writable_key?(key)
+        true
+      end
+    end
     
     class FramePayloadProperties
       def decoded

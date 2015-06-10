@@ -696,6 +696,23 @@ module RabbitMQ
                :user_id,          Bytes,
                :app_id,           Bytes,
                :cluster_id,       Bytes
+        
+        FLAGS = {
+          content_type:     (1 << 15),
+          content_encoding: (1 << 14),
+          headers:          (1 << 13),
+          delivery_mode:    (1 << 12),
+          priority:         (1 << 11),
+          correlation_id:   (1 << 10),
+          reply_to:         (1 << 9),
+          expiration:       (1 << 8),
+          message_id:       (1 << 7),
+          timestamp:        (1 << 6),
+          type:             (1 << 5),
+          user_id:          (1 << 4),
+          app_id:           (1 << 3),
+          cluster_id:       (1 << 2),
+        }
       end
       
       attach_function :amqp_channel_open,     [ConnectionState, Channel],                                                             ChannelOpenOk.ptr,     **opts

@@ -227,20 +227,19 @@ module RabbitMQ
       exchange    = FFI::Bytes.from_s(exchange, true)
       routing_key = FFI::Bytes.from_s(routing_key, true)
       properties  = FFI::BasicProperties.new.apply(
-        content_type:       opts.fetch(:content_type,     "application/octet-stream"),
-        content_encoding:   opts.fetch(:content_encoding, ""),
-        headers:            opts.fetch(:headers,          {}),
-        delivery_mode:     (opts.fetch(:persistent,    false) ? :persistent : :nonpersistent),
-        priority:           opts.fetch(:priority,          0),
-        correlation_id:     opts.fetch(:correlation_id,   ""),
-        reply_to:           opts.fetch(:reply_to,         ""),
-        expiration:         opts.fetch(:expiration,       ""),
-        message_id:         opts.fetch(:message_id,       ""),
-        timestamp:          opts.fetch(:timestamp,         0),
-        type:               opts.fetch(:type,             ""),
-        user_id:            opts.fetch(:user_id,          ""),
-        app_id:             opts.fetch(:app_id,           ""),
-        cluster_id:         opts.fetch(:cluster_id,       "")
+        content_type:       opts.fetch(:content_type,     nil),
+        content_encoding:   opts.fetch(:content_encoding, nil),
+        headers:            opts.fetch(:headers,           {}),
+        delivery_mode:     (opts.fetch(:persistent,     false) ? :persistent : :nonpersistent),
+        priority:           opts.fetch(:priority,           0),
+        correlation_id:     opts.fetch(:correlation_id,   nil),
+        reply_to:           opts.fetch(:reply_to,         nil),
+        expiration:         opts.fetch(:expiration,       nil),
+        message_id:         opts.fetch(:message_id,       nil),
+        timestamp:          opts.fetch(:timestamp,          0),
+        type:               opts.fetch(:type,             nil),
+        app_id:             opts.fetch(:app_id,           nil),
+        cluster_id:         opts.fetch(:cluster_id,       nil)
       )
       
       Util.error_check :"publishing a message",
