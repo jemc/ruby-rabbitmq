@@ -50,6 +50,17 @@ describe RabbitMQ::Util do
         port:     1234,
         ssl:      false
       )
+      
+      subject.connection_info(
+        "amqp://host"
+      ).should eq(
+        user:     "guest",
+        password: "guest",
+        host:     "host",
+        vhost:    "/",
+        port:     5672,
+        ssl:      false
+      )
     end
     
     it "given an SSL URL parses values from the URL" do

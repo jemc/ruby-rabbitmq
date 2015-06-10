@@ -32,6 +32,8 @@ module RabbitMQ
     
     def connection_info url=nil, **overrides
       info = FFI::ConnectionInfo.new
+      FFI.amqp_default_connection_info(info)
+      result = info.to_h
       
       if url
         url_ptr = Util.strdup_ptr(url)
@@ -39,11 +41,8 @@ module RabbitMQ
           FFI.amqp_parse_url(url_ptr, info)
         
         # We must copy ConnectionInfo before the url_ptr is freed.
-        result = info.to_h
+        result.merge!(info.to_h)
         url_ptr.free
-      else
-        FFI.amqp_default_connection_info(info)
-        result = info.to_h
       end
       
       result.merge(overrides)
