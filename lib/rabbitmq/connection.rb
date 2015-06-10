@@ -12,6 +12,8 @@ module RabbitMQ
       @event_handlers    = Hash.new { |h,k| h[k] = {} }
       @incoming_events   = Hash.new { |h,k| h[k] = {} }
       
+      @frame = FFI::Frame.new
+      
       create_socket!
       
       @finalizer = self.class.send :create_finalizer_for, @ptr
@@ -255,7 +257,7 @@ module RabbitMQ
     
     # Return the next available frame, or nil if time expired.
     private def fetch_next_frame(timeout=0, start=Time.now)
-      frame  = FFI::Frame.new
+      frame = @frame
       
       # Try fetching the next frame without a blocking call.
       status = FFI.amqp_simple_wait_frame_noblock(@ptr, frame, FFI::Timeval.zero)
