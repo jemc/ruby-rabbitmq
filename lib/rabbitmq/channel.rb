@@ -58,7 +58,7 @@ module RabbitMQ
     end
     
     private def rpc(request_type, params=[{}], response_type)
-      @connection.send_request(@id, request_type, params.last)
+      @connection.send_request(@id, request_type, params.last || {})
       if response_type
         @connection.fetch_response(@id, response_type)
       else
@@ -223,9 +223,9 @@ module RabbitMQ
     end
     
     def basic_publish(body, exchange, routing_key, **opts)
-      body        = FFI::Bytes.from_s(body, true)
-      exchange    = FFI::Bytes.from_s(exchange, true)
-      routing_key = FFI::Bytes.from_s(routing_key, true)
+      body        = FFI::Bytes.from_s(body)
+      exchange    = FFI::Bytes.from_s(exchange)
+      routing_key = FFI::Bytes.from_s(routing_key)
       properties  = FFI::BasicProperties.new.apply(
         content_type:       opts.fetch(:content_type,     nil),
         content_encoding:   opts.fetch(:content_encoding, nil),
@@ -252,6 +252,9 @@ module RabbitMQ
           body
         )
       
+      body.free!
+      exchange.free!
+      routing_key.free!
       properties.free!
       true
     end

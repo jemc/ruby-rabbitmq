@@ -33,17 +33,13 @@ module RabbitMQ
         clear
       end
       
-      def self.from_s(str, borrow=false)
-        if borrow
-          FFI.amqp_cstring_bytes(str)
-        else
-          size = str.bytesize
-          bytes = FFI.amqp_bytes_malloc(size)
-          
-          bytes[:bytes].write_string(str)
-          bytes[:len] = size
-          bytes
-        end
+      def self.from_s(str)
+        size = str.bytesize
+        bytes = FFI.amqp_bytes_malloc(size)
+        
+        bytes[:bytes].write_string(str)
+        bytes[:len] = size
+        bytes
       end
     end
     
@@ -80,10 +76,10 @@ module RabbitMQ
         clear
       end
       
-      def self.from(value, borrow=false)
+      def self.from(value)
         obj = new
         obj[:kind], obj[:value] = case value
-        when String; [:bytes, FieldValueValue.new(Bytes.from_s(value, borrow).pointer)]
+        when String; [:bytes, FieldValueValue.new(Bytes.from_s(value).pointer)]
         else raise NotImplementedError
         end
         obj
@@ -119,13 +115,13 @@ module RabbitMQ
         clear
       end
       
-      def self.from(params, borrow=false)
+      def self.from(params)
         size      = params.size
         entry_ptr = Util.mem_ptr(size * FFI::TableEntry.size, release: false)
         params.each_with_index do |param, idx|
           entry = FFI::TableEntry.new(entry_ptr + idx * FFI::TableEntry.size)
-          entry[:key]   = FFI::Bytes.from_s(param.first.to_s, borrow)
-          entry[:value] = FFI::FieldValue.from(param.last, borrow)
+          entry[:key]   = FFI::Bytes.from_s(param.first.to_s)
+          entry[:value] = FFI::FieldValue.from(param.last)
         end
         
         obj = new
@@ -179,12 +175,12 @@ module RabbitMQ
     end
     
     module MethodClassMixin
-      def apply(borrow=false, **params)
+      def apply(**params)
         params.each do |key, value|
           next if value.nil? || !writable_key?(key)
           case value
-          when String; value = FFI::Bytes.from_s(value, borrow)
-          when Hash;   value = FFI::Table.from(value, borrow)
+          when String; value = FFI::Bytes.from_s(value)
+          when Hash;   value = FFI::Table.from(value)
           end
           key_applied_hook(key)
           self[key] = value
