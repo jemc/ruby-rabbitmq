@@ -5,7 +5,7 @@ before_install:
 before_script:
   "rake vendor && rake codegen:ffi"
 script:
-  "sudo /usr/sbin/rabbitmq-server -detached && rake"
+  "sudo /usr/sbin/rabbitmq-server -detached && sleep 10 && rake"
 after_script:
   "rake install"
 
