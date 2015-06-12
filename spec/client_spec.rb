@@ -118,9 +118,13 @@ describe RabbitMQ::Client do
     let(:bucket) { [] }
     let(:other_bucket) { [] }
     
-    it "requires a block or callable to be given as the handler" do
-      expect { subject.on_event(11, :channel_open_ok) }.to \
+    it "requires a block or callable object to be given as the handler" do
+      expect { subject.on_event(11, :channel_open_ok, :neither) }.to \
         raise_error ArgumentError, /block or callable/
+    end
+    
+    it "allows nil to clear the handler" do
+      subject.on_event(11, :channel_open_ok, nil)
     end
     
     shared_examples "handling events" do
@@ -148,6 +152,32 @@ describe RabbitMQ::Client do
         event = bucket.pop
         event.fetch(:method).should eq :channel_open_ok
         event.fetch(:channel).should eq 11
+        bucket.should be_empty
+      end
+      
+      it "clears the handler when another one is registered" do
+        subject.on_event(11, :channel_open_ok) do |event|
+          other_bucket << event
+          subject.break!
+        end
+        
+        subject.send_request(11, :channel_open)
+        subject.fetch_response(11, :channel_open_ok)
+        
+        bucket.should be_empty
+        other_bucket.should_not be_empty
+        event = other_bucket.pop
+        event.fetch(:method).should eq :channel_open_ok
+        event.fetch(:channel).should eq 11
+        other_bucket.should be_empty
+      end
+      
+      it "clears the handler when nil is registered" do
+        subject.on_event(11, :channel_open_ok, nil)
+        
+        subject.send_request(11, :channel_open)
+        subject.fetch_response(11, :channel_open_ok)
+        
         bucket.should be_empty
       end
       
@@ -200,9 +230,6 @@ describe RabbitMQ::Client do
       end
       
       it "calls the event multiple times" do
-        subject.break!
-        subject.break!
-        
         subject.send_request(11, :channel_open)
         subject.run_loop!
         
@@ -233,7 +260,7 @@ describe RabbitMQ::Client do
       
       include_examples "handling events"
     end
-      
+    
     context "when given a callable handler" do
       before do
         subject, bucket = subject(), bucket()

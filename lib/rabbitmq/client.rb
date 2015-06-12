@@ -83,18 +83,20 @@ module RabbitMQ
     end
     
     # Register a handler for events on the given channel of the given type.
+    # Only one handler for each event type may be registered at a time.
+    # If no callable or block is given, the handler will be cleared.
     #
     # @param channel_id [Integer] The channel number to watch for.
     # @param method [Symbol] The type of protocol method to watch for.
     # @param callable [#call,nil] The callable handler if no block is given.
     # @param block [Proc,nil] The handler block to register.
-    # @return [Proc,#call] The given block or callable.
+    # @return [Proc,#call,nil] The given block or callable.
     # @yieldparam event [Hash] The event passed to the handler.
     #
     def on_event(channel_id, method, callable=nil, &block)
       handler = block || callable
-      raise ArgumentError, "expected block or callable as event handler" \
-        unless handler.respond_to?(:call)
+      raise ArgumentError, "expected block or callable as the event handler" \
+        unless handler.nil? or handler.respond_to?(:call)
       
       @event_handlers[Integer(channel_id)][method.to_sym] = handler
       handler
@@ -105,7 +107,11 @@ module RabbitMQ
     # an event handler, or until the given timeout duration has elapsed.
     #
     # @param timeout [Float] the maximum time to run the loop, in seconds;
-    #   if none is given, the loop will block indefinitely or until {#break!}.
+    #   if none is given, the loop will block indefinitely or until {#break!}
+    # @param block [Proc,nil] if given, the block will be yielded each
+    #   non-exception event received on any channel. Other handlers or
+    #   response fetchings that match the event will still be processed,
+    #   as the block does not consume the event or replace the handlers.
     #
     def run_loop!(timeout: nil, &block)
       timeout = Float(timeout) if timeout
@@ -140,10 +146,6 @@ module RabbitMQ
       id = allocate_channel(id)
       finalizer = Proc.new { release_channel(id) }
       Channel.new(self, @conn, id, finalizer)
-    end
-    
-    private def ptr
-      @conn.ptr
     end
     
     private def open_channel(id)

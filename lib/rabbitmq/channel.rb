@@ -49,6 +49,7 @@ module RabbitMQ
     end
     
     # @see {Client#run_loop!}
+    # The block will be yielded all non-exception events *for any channel*.
     def run_loop!(*args, &block)
       @client.run_loop!(*args, &block)
     end
