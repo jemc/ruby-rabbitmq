@@ -5,12 +5,11 @@ module RabbitMQ
     attr_reader :connection
     attr_reader :id
     
-    # Don't create a {Channel} directly; call {Connection#channel} instead.
+    # Don't create a {Channel} directly; call {Client#channel} instead.
     # @api private
-    def initialize(connection, id, pre_allocated: false)
+    def initialize(connection, id)
       @connection = connection
       @id         = id
-      connection.send(:allocate_channel, id) unless pre_allocated
       
       @finalizer = self.class.send :create_finalizer_for, @connection, @id
       ObjectSpace.define_finalizer self, @finalizer
@@ -34,17 +33,17 @@ module RabbitMQ
       self
     end
     
-    # @see {Connection#on_event}
+    # @see {Client#on_event}
     def on(*args, &block)
       @connection.on_event(@id, *args, &block)
     end
     
-    # @see {Connection#run_loop!}
+    # @see {Client#run_loop!}
     def run_loop!(*args)
       @connection.run_loop!(*args)
     end
     
-    # @see {Connection#break!}
+    # @see {Client#break!}
     def break!
       @connection.break!
     end

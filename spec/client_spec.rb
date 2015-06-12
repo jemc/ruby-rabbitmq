@@ -2,8 +2,8 @@
 require 'spec_helper'
 
 
-describe RabbitMQ::Connection do
-  let(:subject_class) { RabbitMQ::Connection }
+describe RabbitMQ::Client do
+  let(:subject_class) { RabbitMQ::Client }
   
   describe "destroy" do
     it "is not necessary to call" do
@@ -18,8 +18,8 @@ describe RabbitMQ::Connection do
     
     it "prevents any other network operations on the object" do
       subject.destroy
-      expect { subject.start }.to raise_error RabbitMQ::Connection::DestroyedError
-      expect { subject.close }.to raise_error RabbitMQ::Connection::DestroyedError
+      expect { subject.start }.to raise_error RabbitMQ::Client::DestroyedError
+      expect { subject.close }.to raise_error RabbitMQ::Client::DestroyedError
     end
   end
   

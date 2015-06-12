@@ -1,49 +1,28 @@
 
-require 'socket'
+require_relative 'client/connection'
 
 module RabbitMQ
-  class Connection
+  class Client
     def initialize *args
-      @ptr  = FFI.amqp_new_connection
       @info = Util.connection_info(*args)
+      @conn = Connection.new(self)
       
       @open_channels     = {}
       @released_channels = {}
       @event_handlers    = Hash.new { |h,k| h[k] = {} }
       @incoming_events   = Hash.new { |h,k| h[k] = {} }
-      
-      @frame = FFI::Frame.new
-      
-      create_socket!
-      
-      @finalizer = self.class.send :create_finalizer_for, @ptr
-      ObjectSpace.define_finalizer self, @finalizer
     end
     
     def destroy
-      if @finalizer
-        @finalizer.call
-        ObjectSpace.undefine_finalizer self
-      end
-      @ptr = @socket = @finalizer = nil
+      @conn.destroy
     end
     
-    class DestroyedError < RuntimeError; end
-    
-    # @private
-    def self.create_finalizer_for(ptr)
-      Proc.new do
-        FFI.amqp_connection_close(ptr, 200)
-        FFI.amqp_destroy_connection(ptr)
-      end
-    end
-    
-    def user;     @info[:user];     end
-    def password; @info[:password]; end
-    def host;     @info[:host];     end
-    def vhost;    @info[:vhost];    end
-    def port;     @info[:port];     end
-    def ssl?;     @info[:ssl];      end
+    def user;     @info.fetch(:user);     end
+    def password; @info.fetch(:password); end
+    def host;     @info.fetch(:host);     end
+    def vhost;    @info.fetch(:vhost);    end
+    def port;     @info.fetch(:port);     end
+    def ssl?;     @info.fetch(:ssl);      end
     
     def protocol_timeout
       @protocol_timeout ||= 30 # seconds
@@ -64,16 +43,14 @@ module RabbitMQ
     
     def start
       close # Close if already open
-      connect_socket!
-      login!
+      @conn.connect_socket!
+      @conn.login!
       
       self
     end
     
     def close
-      raise DestroyedError unless @ptr
-      FFI.amqp_connection_close(@ptr, 200)
-      
+      @conn.close
       release_all_channels
       
       self
@@ -88,7 +65,7 @@ module RabbitMQ
     #
     def send_request(channel_id, method, properties={})
       Util.error_check :"sending a request",
-        send_request_internal(Integer(channel_id), method.to_sym, properties)
+        @conn.send_method(Integer(channel_id), method.to_sym, properties)
       
       nil
     end
@@ -155,60 +132,26 @@ module RabbitMQ
     end
     
     def channel(id=nil)
-      Channel.new(self, allocate_channel(id), pre_allocated: true)
+      Channel.new(self, allocate_channel(id))
     end
     
     private def ptr
-      raise DestroyedError unless @ptr
-      @ptr
-    end
-    
-    private def create_socket!
-      raise DestroyedError unless @ptr
-      
-      @socket = FFI.amqp_tcp_socket_new(@ptr)
-      Util.null_check :"creating a socket", @socket
-    end
-    
-    private def connect_socket!
-      raise DestroyedError unless @ptr
-      raise NotImplementedError if ssl?
-      
-      create_socket!
-      Util.error_check :"opening a socket",
-        FFI.amqp_socket_open(@socket, host, port)
-      
-      @ruby_socket = Socket.for_fd(FFI.amqp_get_sockfd(@ptr))
-      @ruby_socket.autoclose = false
-    end
-    
-    private def login!
-      raise DestroyedError unless @ptr
-      
-      res = FFI.amqp_login(@ptr, vhost, max_channels, max_frame_size,
-        heartbeat_interval, :plain, :string, user, :string, password)
-      
-      case res[:reply_type]
-      when :library_exception; Util.error_check :"logging in", res[:library_error]
-      when :server_exception;  raise NotImplementedError
-      end
-      
-      @server_properties = FFI::Table.new(FFI.amqp_get_server_properties(@ptr)).to_h
+      @conn.ptr
     end
     
     private def open_channel(id)
       Util.error_check :"opening a new channel",
-        send_request_internal(id, :channel_open)
+        @conn.send_method(id, :channel_open)
       
       fetch_response(id, :channel_open_ok)
     end
     
     private def reopen_channel(id)
       Util.error_check :"acknowledging server-initated channel closure",
-        send_request_internal(id, :channel_close_ok)
+        @conn.send_method(id, :channel_close_ok)
       
       Util.error_check :"reopening channel after server-initated closure",
-        send_request_internal(id, :channel_open)
+        @conn.send_method(id, :channel_open)
       
       fetch_response(id, :channel_open_ok)
     end
@@ -242,60 +185,6 @@ module RabbitMQ
       @open_channels.clear
       @event_handlers.clear
       @released_channels.clear
-    end
-    
-    # Block until there is readable data on the internal ruby socket,
-    # returning true if there is readable data, or false if time expired.
-    private def select(timeout=0, start=Time.now)
-      if timeout
-        timeout = timeout - (start-Time.now)
-        timeout = 0 if timeout < 0
-      end
-      
-      IO.select([@ruby_socket], [], [], timeout) ? true : false
-    end
-    
-    # Return the next available frame, or nil if time expired.
-    private def fetch_next_frame(timeout=0, start=Time.now)
-      frame = @frame
-      
-      # Try fetching the next frame without a blocking call.
-      status = FFI.amqp_simple_wait_frame_noblock(@ptr, frame, FFI::Timeval.zero)
-      case status
-      when :ok;      return frame
-      when :timeout; # do nothing and proceed to waiting on select below
-      else Util.error_check :"fetching the next frame", status
-      end
-      
-      # Otherwise, wait for the socket to be readable and try fetching again.
-      return nil unless select(timeout, start)
-      Util.error_check :"fetching the next frame",
-        FFI.amqp_simple_wait_frame(@ptr, frame)
-      
-      frame
-    end
-    
-    # Fetch the next one or more frames to form the next discrete event,
-    # returning the event as a Hash, or nil if time expired.
-    private def fetch_next_event(timeout=0, start=Time.now)
-      frame = fetch_next_frame(timeout, start)
-      return unless frame
-      event = frame.as_method_to_h(false)
-      return event unless FFI::Method.has_content?(event.fetch(:method))
-      
-      frame = fetch_next_frame(timeout, start)
-      return unless frame
-      event.merge!(frame.as_header_to_h)
-      
-      body = ""
-      while body.size < event.fetch(:body_size)
-        frame = fetch_next_frame(timeout, start)
-        return unless frame
-        body.concat frame.as_body_to_s
-      end
-      
-      event[:body] = body
-      event
     end
     
     # Execute the handler for this type of event, if any
@@ -338,45 +227,31 @@ module RabbitMQ
     end
     
     private def fetch_events(timeout=protocol_timeout, start=Time.now)
-      raise DestroyedError unless @ptr
+      @conn.garbage_collect
       
-      FFI.amqp_maybe_release_buffers(@ptr)
-      
-      while (event = fetch_next_event(timeout, start))
+      while (event = @conn.fetch_next_event(timeout, start))
         handle_incoming_event(event)
         store_incoming_event(event)
         break if @breaking
       end
     end
     
-    private def fetch_response_internal(channel, methods, timeout=protocol_timeout, start=Time.now)
-      raise DestroyedError unless @ptr
-      
+    private def fetch_response_internal(channel_id, methods, timeout=protocol_timeout, start=Time.now)
       methods.each { |method|
-        found = @incoming_events[channel].delete(method)
+        found = @incoming_events[channel_id].delete(method)
         return found if found
       }
       
-      FFI.amqp_maybe_release_buffers_on_channel(@ptr, channel)
+      @conn.garbage_collect_channel(channel_id)
       
-      while (event = fetch_next_event(timeout, start))
+      while (event = @conn.fetch_next_event(timeout, start))
         handle_incoming_event(event)
-        return event if channel == event.fetch(:channel) \
+        return event if channel_id == event.fetch(:channel) \
                      && methods.include?(event.fetch(:method))
         store_incoming_event(event)
       end
       
       raise FFI::Error::Timeout, "waiting for response"
-    end
-    
-    private def send_request_internal(channel_id, method, properties={})
-      raise DestroyedError unless @ptr
-      
-      req    = FFI::Method.lookup_class(method).new.apply(properties)
-      status = FFI.amqp_send_method(@ptr, channel_id, method, req.pointer)
-      
-      req.free!
-      status
     end
   end
 end

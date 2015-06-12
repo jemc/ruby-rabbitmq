@@ -7,5 +7,5 @@ require_relative 'rabbitmq/ffi/error'
 
 require_relative 'rabbitmq/server_error'
 
-require_relative 'rabbitmq/connection'
+require_relative 'rabbitmq/client'
 require_relative 'rabbitmq/channel'

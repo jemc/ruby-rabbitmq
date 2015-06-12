@@ -3,7 +3,7 @@ require 'spec_helper'
 
 
 describe RabbitMQ::Channel do
-  let(:connection) { RabbitMQ::Connection.new.start }
+  let(:connection) { RabbitMQ::Client.new.start }
   let(:id) { 11 }
   let(:subject) { connection.channel(id) }
   
