@@ -2,16 +2,16 @@
 module RabbitMQ
   class Channel
     
-    attr_reader :connection
+    attr_reader :client
     attr_reader :id
     
     # Don't create a {Channel} directly; call {Client#channel} instead.
     # @api private
-    def initialize(connection, id)
-      @connection = connection
-      @id         = id
-      
-      @finalizer = self.class.send :create_finalizer_for, @connection, @id
+    def initialize(client, conn, id, finalizer)
+      @client    = client
+      @conn      = conn
+      @id        = id
+      @finalizer = finalizer
       ObjectSpace.define_finalizer self, @finalizer
     end
     
@@ -19,7 +19,7 @@ module RabbitMQ
     # This will be called automatically by the object finalizer after
     # the object becomes unreachable by the VM and is garbage collected,
     # but you may want to call it explicitly if you plan to reuse the same
-    # channel if in another {Channel} instance explicitly.
+    # channel id in another {Channel} instance explicitly.
     #
     # @return [Channel] self.
     #
@@ -35,31 +35,23 @@ module RabbitMQ
     
     # @see {Client#on_event}
     def on(*args, &block)
-      @connection.on_event(@id, *args, &block)
+      @client.on_event(@id, *args, &block)
     end
     
     # @see {Client#run_loop!}
     def run_loop!(*args)
-      @connection.run_loop!(*args)
+      @client.run_loop!(*args)
     end
     
     # @see {Client#break!}
     def break!
-      @connection.break!
-    end
-    
-    # Create a finalizer not entangled with the {Channel} instance.
-    # @api private
-    def self.create_finalizer_for(connection, id)
-      Proc.new do
-        connection.send(:release_channel, id)
-      end
+      @client.break!
     end
     
     private def rpc(request_type, params=[{}], response_type)
-      @connection.send_request(@id, request_type, params.last || {})
+      @client.send_request(@id, request_type, params.last || {})
       if response_type
-        @connection.fetch_response(@id, response_type)
+        @client.fetch_response(@id, response_type)
       else
         true
       end
@@ -242,7 +234,7 @@ module RabbitMQ
       )
       
       Util.error_check :"publishing a message",
-        FFI.amqp_basic_publish(connection.send(:ptr), @id,
+        FFI.amqp_basic_publish(@conn.ptr, @id,
           exchange,
           routing_key,
           opts.fetch(:mandatory, false),

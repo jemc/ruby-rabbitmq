@@ -125,8 +125,21 @@ module RabbitMQ
       nil
     end
     
+    # Open a new channel of communication and return a new {Channel} object
+    # with convenience methods for communicating on that channel. The
+    # channel will be automatically closed if the {Channel} instance is
+    # garbage collected, or if the {Client} connection is {#close}d.
+    #
+    # @param id [Integer,nil] The channel id number to use. If nil or not
+    #   given, a unique channel number will be chosen automatically.
+    # @raise [ArgumentError] If the given channel id number is not unique or
+    #   if the given channel id number is greater than {#max_channels}.
+    # @return [Channel] The new channel handle.
+    #
     def channel(id=nil)
-      Channel.new(self, allocate_channel(id))
+      id = allocate_channel(id)
+      finalizer = Proc.new { release_channel(id) }
+      Channel.new(self, @conn, id, finalizer)
     end
     
     private def ptr
@@ -152,6 +165,7 @@ module RabbitMQ
     
     private def allocate_channel(id=nil)
       if id
+        id = Integer(id)
         raise ArgumentError, "channel #{id} is already in use" if @open_channels[id]
       elsif @released_channels.empty?
         id = (@open_channels.keys.sort.last || 0) + 1
