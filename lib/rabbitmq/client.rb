@@ -5,6 +5,32 @@ module RabbitMQ
   class Client
     DEFAULT_PROTOCOL_TIMEOUT = 30 # seconds
     
+    # Create a new {Client} instance with the given properties.
+    # There are several ways to convey connection info:
+    #
+    # @example with a URL string
+    #  RabbitMQ::Client.new("amqp://user:password@host:1234/vhost")
+    #
+    # @example with explicit options
+    #  RabbitMQ::Client.new(user: "user", password: "password", port: 1234)
+    #
+    # @example with both URL string and explicit options
+    #  RabbitMQ::Client.new("amqp://host:1234", user: "user", password: "password")
+    #
+    # Parsed options from a URL will be applied first, then any options given
+    # explicitly will override those parsed. If any options are ambiguous, they
+    # will have the default values:
+    #   {
+    #     user:           "guest",
+    #     password:       "guest",
+    #     host:           "localhost",
+    #     vhost:          "/",
+    #     port:           5672,
+    #     ssl:            false,
+    #     max_channels:   RabbitMQ::FFI::CHANNEL_MAX_ID, # absolute maximum
+    #     max_frame_size: 131072,
+    #   }
+    #
     def initialize(*args)
       @conn = Connection.new(*args)
       
@@ -16,18 +42,24 @@ module RabbitMQ
       @protocol_timeout  = DEFAULT_PROTOCOL_TIMEOUT
     end
     
+    # Initiate the connection with the server. It is necessary to call this
+    # before any other communication, including creating a {#channel}. 
     def start
       close # Close if already open
       @conn.start
       self
     end
     
+    # Gracefully close the connection with the server. This will
+    # be done automatically on garbage collection if not called explicitly.
     def close
       @conn.close
       release_all_channels
       self
     end
     
+    # Free the native resources associated with this object. This will
+    # be done automatically on garbage collection if not called explicitly.
     def destroy
       @conn.destroy
       self
