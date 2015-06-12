@@ -1,5 +1,6 @@
 
 require 'rake/clean'
+require 'ffi'
 
 FILES = {}
 
@@ -36,7 +37,7 @@ file_task 'config.status', :configure => :download do
   system "cp #{FILES[:download]}/#{FILES[:configure]} ./"
 end
 
-file_task 'librabbitmq.so', :build => :configure do
+file_task "librabbitmq.#{::FFI::Platform::LIBSUFFIX}", :build => :configure do
   system "bash -c 'cd #{FILES[:download]} && make'"
   system "cp #{FILES[:download]}/librabbitmq/.libs/#{FILES[:build]} ."
 end

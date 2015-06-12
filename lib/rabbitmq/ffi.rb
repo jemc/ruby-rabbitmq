@@ -6,9 +6,11 @@ module RabbitMQ
   module FFI
     extend ::FFI::Library
     
+    libfile = "librabbitmq.#{::FFI::Platform::LIBSUFFIX}"
+    
     ffi_lib ::FFI::Library::LIBC
     ffi_lib \
-      File.expand_path("../../ext/rabbitmq/librabbitmq.so", File.dirname(__FILE__))
+      File.expand_path("../../ext/rabbitmq/#{libfile}", File.dirname(__FILE__))
     
     begin # TODO: remove begin/end block
       opts = {
