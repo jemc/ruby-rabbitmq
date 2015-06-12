@@ -119,12 +119,8 @@ describe RabbitMQ::Client do
     let(:other_bucket) { [] }
     
     it "requires a block or callable object to be given as the handler" do
-      expect { subject.on_event(11, :channel_open_ok, :neither) }.to \
+      expect { subject.on_event(11, :channel_open_ok) }.to \
         raise_error ArgumentError, /block or callable/
-    end
-    
-    it "allows nil to clear the handler" do
-      subject.on_event(11, :channel_open_ok, nil)
     end
     
     shared_examples "handling events" do
@@ -172,13 +168,20 @@ describe RabbitMQ::Client do
         other_bucket.should be_empty
       end
       
-      it "clears the handler when nil is registered" do
-        subject.on_event(11, :channel_open_ok, nil)
+      it "clears the handler when explicitly unregistered" do
+        subject.clear_event_handler(11, :channel_open_ok).should respond_to :call
         
         subject.send_request(11, :channel_open)
         subject.fetch_response(11, :channel_open_ok)
         
         bucket.should be_empty
+      end
+      
+      it "clears the handler and returns nil when already cleared" do
+        subject.clear_event_handler(11, :channel_close_ok).should eq nil
+        
+        subject.clear_event_handler(11, :channel_open_ok).should respond_to :call
+        subject.clear_event_handler(11, :channel_open_ok).should eq nil
       end
       
       it "calls the block passed to run_loop! for handler-matching events" do

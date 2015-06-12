@@ -69,6 +69,11 @@ describe RabbitMQ::Channel do
       subject.on(*a, &b).should eq res
     end
     
+    specify "#clear_event_handler" do
+      client.should_receive(:clear_event_handler).with(id, *a) { res }
+      subject.clear_event_handler(*a).should eq res
+    end
+    
     specify "#send_request" do
       client.should_receive(:send_request).with(id, *a) { res }
       subject.send_request(*a).should eq res

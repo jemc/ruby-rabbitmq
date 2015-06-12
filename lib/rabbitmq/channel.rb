@@ -67,6 +67,11 @@ module RabbitMQ
     end
     alias_method :on, :on_event
     
+    # @see {Client#clear_event_handler}
+    def clear_event_handler(*args)
+      @client.clear_event_handler(@id, *args)
+    end
+    
     # @see {Client#run_loop!}
     # The block will be yielded all non-exception events *for any channel*.
     def run_loop!(*args, &block)

@@ -142,10 +142,20 @@ module RabbitMQ
     def on_event(channel_id, method, callable=nil, &block)
       handler = block || callable
       raise ArgumentError, "expected block or callable as the event handler" \
-        unless handler.nil? or handler.respond_to?(:call)
+        unless handler.respond_to?(:call)
       
       @event_handlers[Integer(channel_id)][method.to_sym] = handler
       handler
+    end
+    
+    # Unregister the event handler associated with the given channel and method.
+    #
+    # @param channel_id [Integer] The channel number to watch for.
+    # @param method [Symbol] The type of protocol method to watch for.
+    # @return [Proc,nil] This removed handler, if any.
+    #
+    def clear_event_handler(channel_id, method)
+      @event_handlers[Integer(channel_id)].delete(method.to_sym)
     end
     
     # Fetch and handle events in a loop that blocks the calling thread.
