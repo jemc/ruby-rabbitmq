@@ -1,5 +1,23 @@
 
 module RabbitMQ
+  
+  # A {Channel} holds a connection to a RabbitMQ server and is associated
+  # with a specific channel id number for categorizing message flow.
+  # It also provides convenient wrapper methods for common uses of
+  # the underlying {Client}.
+  #
+  # A {Channel} is not threadsafe; both the {Channel} and its associated
+  # {Client} should not be shared between threads. If they are shared without
+  # appropriate locking mechanisms, the behavior is undefined and might result
+  # in catastrophic process failures like segmentation faults in the underlying
+  # C library. A {Channel} can be safely used in a multithreaded application by
+  # only passing control and message data between threads.
+  #
+  # To use a {Channel} effectively, it is necessary to understand the
+  # methods available in the underlying AMQP protocol. Please refer to
+  # the protocol documentation for more information about specific methods:
+  # http://www.rabbitmq.com/amqp-0-9-1-reference.html
+  #
   class Channel
     
     attr_reader :client

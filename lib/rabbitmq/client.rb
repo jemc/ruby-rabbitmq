@@ -13,6 +13,11 @@ module RabbitMQ
   # C library. A {Client} can be safely used in a multithreaded application by
   # only passing control and message data between threads.
   #
+  # To use a {Client} effectively, it is necessary to understand the
+  # methods available in the underlying AMQP protocol. Please refer to
+  # the protocol documentation for more information about specific methods:
+  # http://www.rabbitmq.com/amqp-0-9-1-reference.html
+  #
   class Client
     
     # Create a new {Client} instance with the given properties.
