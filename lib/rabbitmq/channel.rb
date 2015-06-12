@@ -60,175 +60,185 @@ module RabbitMQ
       @client.break!
     end
     
-    private def rpc(request_type, params=[{}], response_type)
-      @client.send_request(@id, request_type, params.last || {})
-      if response_type
-        @client.fetch_response(@id, response_type)
-      else
-        true
-      end
-    end
-    
     ##
     # Exchange operations
     
     def exchange_declare(name, type, **opts)
-      rpc :exchange_declare, [
+      send_request :exchange_declare, {
         exchange:    name,
         type:        type,
         passive:     opts.fetch(:passive,     false),
         durable:     opts.fetch(:durable,     false),
         auto_delete: opts.fetch(:auto_delete, false),
         internal:    opts.fetch(:internal,    false),
-      ], :exchange_declare_ok
+      }
+      fetch_response :exchange_declare_ok
     end
     
     def exchange_delete(name, **opts)
-      rpc :exchange_delete, [
+      send_request :exchange_delete, {
         exchange:  name,
-        if_unused: opts.fetch(:if_unused, false),
-      ], :exchange_delete_ok
+        if_unused: opts.fetch(:if_unused, false)
+      }
+      fetch_response :exchange_delete_ok
     end
     
     def exchange_bind(source, destination, **opts)
-      rpc :exchange_bind, [
+      send_request :exchange_bind, {
         source:      source,
         destination: destination,
         routing_key: opts.fetch(:routing_key, ""),
-        arguments:   opts.fetch(:arguments,   {}),
-      ], :exchange_bind_ok
+        arguments:   opts.fetch(:arguments,   {})
+      }
+      fetch_response :exchange_bind_ok
     end
     
     def exchange_unbind(source, destination, **opts)
-      rpc :exchange_unbind, [
+      send_request :exchange_unbind, {
         source:      source,
         destination: destination,
         routing_key: opts.fetch(:routing_key, ""),
-        arguments:   opts.fetch(:arguments,   {}),
-      ], :exchange_unbind_ok
+        arguments:   opts.fetch(:arguments,   {})
+      }
+      fetch_response :exchange_unbind_ok
     end
     
     ##
     # Queue operations
     
     def queue_declare(name, **opts)
-      rpc :queue_declare, [
+      send_request :queue_declare, {
         queue:       name,
         passive:     opts.fetch(:passive,     false),
         durable:     opts.fetch(:durable,     false),
         exclusive:   opts.fetch(:exclusive,   false),
         auto_delete: opts.fetch(:auto_delete, false),
-        arguments:   opts.fetch(:arguments,   {}),
-      ], :queue_declare_ok
+        arguments:   opts.fetch(:arguments,   {})
+      }
+      fetch_response :queue_declare_ok
     end
     
     def queue_bind(name, exchange, **opts)
-      rpc :queue_bind, [
+      send_request :queue_bind, {
         queue:       name,
         exchange:    exchange,
         routing_key: opts.fetch(:routing_key, ""),
-        arguments:   opts.fetch(:arguments,   {}),
-      ], :queue_bind_ok
+        arguments:   opts.fetch(:arguments,   {})
+      }
+      fetch_response :queue_bind_ok
     end
     
     def queue_unbind(name, exchange, **opts)
-      rpc :queue_unbind, [
+      send_request :queue_unbind, {
         queue:       name,
         exchange:    exchange,
         routing_key: opts.fetch(:routing_key, ""),
-        arguments:   opts.fetch(:arguments,   {}),
-      ], :queue_unbind_ok
+        arguments:   opts.fetch(:arguments,   {})
+      }
+      fetch_response :queue_unbind_ok
     end
     
     def queue_purge(name)
-      rpc :queue_purge, [queue: name], :queue_purge_ok
+      send_request :queue_purge, { queue: name }
+      fetch_response :queue_purge_ok
     end
     
     def queue_delete(name, **opts)
-      rpc :queue_delete, [
+      send_request :queue_delete, {
         queue:     name,
         if_unused: opts.fetch(:if_unused, false),
-        if_empty:  opts.fetch(:if_empty,  false),
-      ], :queue_delete_ok
+        if_empty:  opts.fetch(:if_empty,  false)
+      }
+      fetch_response :queue_delete_ok
     end
     
     ##
     # Consumer operations
     
     def basic_qos(**opts)
-      rpc :basic_qos, [
+      send_request :basic_qos, {
         prefetch_count: opts.fetch(:prefetch_count, 0),
         prefetch_size:  opts.fetch(:prefetch_size,  0),
-        global:         opts.fetch(:global,         false),
-      ], :basic_qos_ok
+        global:         opts.fetch(:global,         false)
+      }
+      fetch_response :basic_qos_ok
     end
     
     def basic_consume(queue, consumer_tag="", **opts)
-      rpc :basic_consume, [
+      send_request :basic_consume, {
         queue:        queue,
         consumer_tag: consumer_tag,
         no_local:     opts.fetch(:no_local,  false),
         no_ack:       opts.fetch(:no_ack,    false),
         exclusive:    opts.fetch(:exclusive, false),
-        arguments:    opts.fetch(:arguments, {}),
-      ], :basic_consume_ok
+        arguments:    opts.fetch(:arguments, {})
+      }
+      fetch_response :basic_consume_ok
     end
     
     def basic_cancel(consumer_tag)
-      rpc :basic_cancel, [consumer_tag: consumer_tag], :basic_cancel_ok
+      send_request :basic_cancel, { consumer_tag: consumer_tag }
+      fetch_response :basic_cancel_ok
     end
     
     ##
     # Transaction operations
     
     def tx_select
-      rpc :tx_select, [], :tx_select_ok
+      send_request :tx_select
+      fetch_response :tx_select_ok
     end
     
     def tx_commit
-      rpc :tx_commit, [], :tx_commit_ok
+      send_request :tx_commit
+      fetch_response :tx_commit_ok
     end
     
     def tx_rollback
-      rpc :tx_rollback, [], :tx_rollback_ok
+      send_request :tx_rollback
+      fetch_response :tx_rollback_ok
     end
     
     ##
     # Message operations
     
     def basic_get(queue, **opts)
-      rpc :basic_get, [
+      send_request :basic_get, {
         queue:  queue,
-        no_ack: opts.fetch(:no_ack, false),
-      ], [:basic_get_ok, :basic_get_empty]
+        no_ack: opts.fetch(:no_ack, false)
+      }
+      fetch_response [:basic_get_ok, :basic_get_empty]
     end
     
     def basic_ack(delivery_tag, **opts)
-      rpc :basic_ack, [
+      send_request :basic_ack, {
         delivery_tag: delivery_tag,
-        multiple:     opts.fetch(:multiple, false),
-      ], nil
+        multiple:     opts.fetch(:multiple, false)
+      }
+      true
     end
     
     def basic_nack(delivery_tag, **opts)
-      rpc :basic_nack, [
+      send_request :basic_nack, {
         delivery_tag: delivery_tag,
         multiple:     opts.fetch(:multiple, false),
-        requeue:      opts.fetch(:requeue, true),
-      ], nil
+        requeue:      opts.fetch(:requeue, true)
+      }
+      true
     end
     
     def basic_reject(delivery_tag, **opts)
-      rpc :basic_reject, [
+      send_request :basic_reject, {
         delivery_tag: delivery_tag,
-        requeue:      opts.fetch(:requeue, true),
-      ], nil
+        requeue:      opts.fetch(:requeue, true)
+      }
+      true
     end
     
     def basic_publish(body, exchange, routing_key, **opts)
-      body        = FFI::Bytes.from_s(body)
-      exchange    = FFI::Bytes.from_s(exchange)
-      routing_key = FFI::Bytes.from_s(routing_key)
+      body        = FFI::Bytes.from_s(body.to_s)
+      exchange    = FFI::Bytes.from_s(exchange.to_s)
+      routing_key = FFI::Bytes.from_s(routing_key.to_s)
       properties  = FFI::BasicProperties.new.apply(
         content_type:       opts.fetch(:content_type,     nil),
         content_encoding:   opts.fetch(:content_encoding, nil),
