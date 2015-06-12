@@ -4,3 +4,4 @@ ext/rabbitmq/rabbitmq-c.tar.gz
 ext/rabbitmq/rabbitmq-c
 ext/rabbitmq/config.status
 ext/rabbitmq/librabbitmq.so
+^lib/rabbitmq/ffi/gen

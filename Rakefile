@@ -30,3 +30,9 @@ end
 task :vendor_clean do
   system "cd ext/rabbitmq && rake clean"
 end
+
+namespace :codegen do
+  task :ffi do
+    require_relative 'codegen/ffi'
+  end
+end

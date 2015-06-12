@@ -174,15 +174,15 @@ module RabbitMQ
       end
     end
     
-    module MethodClassMixin
+    class BasicProperties
       def apply(**params)
         params.each do |key, value|
-          next if value.nil? || !writable_key?(key)
+          next if value.nil?
           case value
           when String; value = FFI::Bytes.from_s(value)
           when Hash;   value = FFI::Table.from(value)
           end
-          key_applied_hook(key)
+          set_flag_for_key(key)
           self[key] = value
         end
         self
@@ -191,19 +191,13 @@ module RabbitMQ
       def to_h(free=false)
         result = {}
         self.members.each do |key| [key, self[key]]
-          next unless readable_key?(key)
+          next unless flag_for_key?(key)
           value = self[key]
           case value
           when FFI::Bytes; value = value.to_s(free)
           when FFI::Table; value = value.to_h(free)
           end
           result[key] = value
-        end
-        
-        # TODO: handle the inverse case of this transformation in apply method
-        if (method_id = result.delete(:method_id))
-          method_num = (result.delete(:class_id) << 16) + method_id
-          result[:method] = FFI::MethodNumber[method_num]
         end
         
         clear if free
@@ -217,39 +211,17 @@ module RabbitMQ
         clear
       end
       
-      def key_applied_hook(key)
-        # do nothing here
-      end
-      
-      def readable_key?(key)
-        key != :dummy
-      end
-      
-      def writable_key?(key)
-        key != :dummy
-      end
-    end
-    
-    Method::MethodClasses.each { |_, kls| kls.send(:include, MethodClassMixin) }
-    
-    BasicProperties.send(:include, MethodClassMixin)
-    
-    class BasicProperties
-      def key_applied_hook(key)
+      def set_flag_for_key(key)
         flag_bit = FLAGS[key]
         return unless flag_bit
         self[:_flags] = (self[:_flags] | flag_bit)
       end
       
-      def readable_key?(key)
+      def flag_for_key?(key)
         return false if key == :_flags
         flag_bit = FLAGS[key]
         return true unless flag_bit
         return (flag_bit & self[:_flags]) != 0
-      end
-      
-      def writable_key?(key)
-        true
       end
     end
     
