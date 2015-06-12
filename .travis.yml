@@ -1,5 +1,6 @@
 before_install:
-  "apt-get install -y rabbitmq-server"
+  - "if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y rabbitmq-server; fi"
+  - "if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install rabbitmq && sudo /usr/local/sbin/rabbitmq-server &; fi"
 
 before_script:
   "rake vendor && rake codegen:ffi"
@@ -11,8 +12,9 @@ after_script:
 language: ruby
 rvm:
   - 2.1
-  - 2.2
-  - rbx-2
+os:
+  - linux
+  - osx
 
 notifications:
   email: false
