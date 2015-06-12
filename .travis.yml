@@ -1,12 +1,11 @@
 before_install:
   - "sudo apt-get update"
   - "sudo apt-get install -y rabbitmq-server"
-  - "sudo /usr/sbin/rabbitmq-server -detached"
 
 before_script:
   "rake vendor && rake codegen:ffi"
 script:
-  "rake"
+  "sudo /usr/sbin/rabbitmq-server -detached && rake"
 after_script:
   "rake install"
 
