@@ -9,13 +9,26 @@ module RabbitMQ
     class Connection
       
       attr_reader :ptr
+      attr_reader :options
       
-      def initialize(client)
-        @client = client
-        @frame = FFI::Frame.new
+      def initialize(*args)
         @ptr = FFI.amqp_new_connection
+        @frame = FFI::Frame.new
         
         create_socket!
+        
+        info = Util.connection_info(*args)
+        @options = {
+          ssl:                   (info.fetch(:ssl) ? true : false),
+          host:                   info.fetch(:host).to_s,
+          port:           Integer(info.fetch(:port)),
+          user:                   info.fetch(:user).to_s,
+          password:               info.fetch(:password).to_s,
+          vhost:                  info.fetch(:vhost).to_s,
+          max_channels:   Integer(info.fetch(:max_channels, FFI::CHANNEL_MAX_ID)),
+          max_frame_size: Integer(info.fetch(:max_frame_size, 131072)),
+          heartbeat_interval: 0, # not fully implemented in librabbitmq
+        }
         
         @finalizer = self.class.create_finalizer_for(@ptr)
         ObjectSpace.define_finalizer(self, @finalizer)
@@ -42,6 +55,11 @@ module RabbitMQ
         @ptr
       end
       
+      def start
+        connect_socket!
+        login!
+      end
+      
       def close
         raise DestroyedError unless @ptr
         FFI.amqp_connection_close(@ptr, 200)
@@ -56,11 +74,11 @@ module RabbitMQ
       
       def connect_socket!
         raise DestroyedError unless @ptr
-        raise NotImplementedError if @client.ssl?
+        raise NotImplementedError if @options[:ssl]
         
         create_socket!
         Util.error_check :"opening a socket",
-          FFI.amqp_socket_open(@socket, @client.host, @client.port)
+          FFI.amqp_socket_open(@socket, @options[:host], @options[:port])
         
         @ruby_socket = Socket.for_fd(FFI.amqp_get_sockfd(@ptr))
         @ruby_socket.autoclose = false
@@ -69,10 +87,10 @@ module RabbitMQ
       def login!
         raise DestroyedError unless @ptr
         
-        res = FFI.amqp_login(@ptr, @client.vhost,
-          @client.max_channels, @client.max_frame_size,
-          @client.heartbeat_interval, :plain,
-          :string, @client.user, :string, @client.password)
+        res = FFI.amqp_login(@ptr, @options[:vhost],
+          @options[:max_channels], @options[:max_frame_size],
+          @options[:heartbeat_interval], :plain,
+          :string, @options[:user], :string, @options[:password])
         
         case res[:reply_type]
         when :library_exception; Util.error_check :"logging in", res[:library_error]

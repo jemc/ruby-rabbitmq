@@ -4,33 +4,11 @@ require 'spec_helper'
 
 describe RabbitMQ::Client do
   let(:subject_class) { RabbitMQ::Client }
-  
-  describe "destroy" do
-    it "is not necessary to call" do
-      subject
-    end
-    
-    it "can be called several times to no additional effect" do
-      subject.destroy
-      subject.destroy
-      subject.destroy
-    end
-    
-    it "prevents any other network operations on the object" do
-      subject.destroy
-      expect { subject.start }.to raise_error RabbitMQ::Client::DestroyedError
-      expect { subject.close }.to raise_error RabbitMQ::Client::DestroyedError
-    end
-  end
+  let(:connection) { subject.instance_variable_get(:@conn) }
   
   describe "start" do
-    it "initiates the connection to the server" do
-      subject.start
-    end
-    
-    it "can be called several times to reconnect" do
-      subject.start
-      subject.start
+    it "calls Connection#start" do
+      connection.should_receive(:start)
       subject.start
     end
     
@@ -39,20 +17,20 @@ describe RabbitMQ::Client do
     end
   end
   
+  describe "destroy" do
+    it "calls Connection#destroy" do
+      connection.should_receive(:destroy)
+      subject.destroy
+    end
+    
+    it "returns self" do
+      subject.destroy.should eq subject
+    end
+  end
+  
   describe "close" do
-    it "closes the initiated connection" do
-      subject.start
-      subject.close
-    end
-    
-    it "can be called several times to no additional effect" do
-      subject.start
-      subject.close
-      subject.close
-      subject.close
-    end
-    
-    it "can be called before connecting to no effect" do
+    it "calls Connection#close" do
+      connection.should_receive(:close)
       subject.close
     end
     
@@ -61,24 +39,27 @@ describe RabbitMQ::Client do
     end
   end
   
-  it "uses Util.connection_info to parse info from its creation arguments" do
-    args = ["parsable url", { foo: "bar" }]
-    RabbitMQ::Util.should_receive(:connection_info).with(*args) {{
-      user:     "user",
-      password: "password",
-      host:     "host",
-      vhost:    "vhost",
-      port:     1234,
-      ssl:      false
+  describe "delegated connection properties" do
+    let(:options) {{
+      user:           "user",
+      password:       "password",
+      host:           "host",
+      vhost:          "vhost",
+      port:           1234,
+      ssl:            false,
+      max_channels:   100,
+      max_frame_size: 9999,
     }}
-    subject = subject_class.new(*args)
+    before { connection.should_receive(:options) { options } }
     
-    subject.user    .should eq "user"
-    subject.password.should eq "password"
-    subject.host    .should eq "host"
-    subject.vhost   .should eq "vhost"
-    subject.port    .should eq 1234
-    subject.ssl?    .should eq false
+    its(:user)           { should eq options[:user] }
+    its(:password)       { should eq options[:password] }
+    its(:host)           { should eq options[:host] }
+    its(:vhost)          { should eq options[:vhost] }
+    its(:port)           { should eq options[:port] }
+    its(:ssl?)           { should eq options[:ssl] }
+    its(:max_channels)   { should eq options[:max_channels] }
+    its(:max_frame_size) { should eq options[:max_frame_size] }
   end
   
   describe "channel" do
@@ -107,7 +88,8 @@ describe RabbitMQ::Client do
     end
     
     it "raises an ArgumentError when there are no more channels available" do
-      subject.max_channels = 100
+      subject = subject_class.new(max_channels: 100).start
+      subject.max_channels.should eq 100
       channels = 100.times.map { subject.channel }
       expect { subject.channel }.to raise_error ArgumentError, /too high/
     end

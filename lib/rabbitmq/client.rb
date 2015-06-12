@@ -3,57 +3,51 @@ require_relative 'client/connection'
 
 module RabbitMQ
   class Client
-    def initialize *args
-      @info = Util.connection_info(*args)
-      @conn = Connection.new(self)
+    DEFAULT_PROTOCOL_TIMEOUT = 30 # seconds
+    
+    def initialize(*args)
+      @conn = Connection.new(*args)
       
       @open_channels     = {}
       @released_channels = {}
       @event_handlers    = Hash.new { |h,k| h[k] = {} }
       @incoming_events   = Hash.new { |h,k| h[k] = {} }
+      
+      @protocol_timeout  = DEFAULT_PROTOCOL_TIMEOUT
     end
-    
-    def destroy
-      @conn.destroy
-    end
-    
-    def user;     @info.fetch(:user);     end
-    def password; @info.fetch(:password); end
-    def host;     @info.fetch(:host);     end
-    def vhost;    @info.fetch(:vhost);    end
-    def port;     @info.fetch(:port);     end
-    def ssl?;     @info.fetch(:ssl);      end
-    
-    def protocol_timeout
-      @protocol_timeout ||= 30 # seconds
-    end
-    attr_writer :protocol_timeout
-    
-    def max_channels
-      @max_channels ||= FFI::CHANNEL_MAX_ID
-    end
-    attr_writer :max_channels
-    
-    def max_frame_size
-      @max_frame_size ||= 131072
-    end
-    attr_writer :max_frame_size
-    
-    def heartbeat_interval; 0; end # not fully implemented in librabbitmq
     
     def start
       close # Close if already open
-      @conn.connect_socket!
-      @conn.login!
-      
+      @conn.start
       self
     end
     
     def close
       @conn.close
       release_all_channels
-      
       self
+    end
+    
+    def destroy
+      @conn.destroy
+      self
+    end
+    
+    def user;     @conn.options.fetch(:user);     end
+    def password; @conn.options.fetch(:password); end
+    def host;     @conn.options.fetch(:host);     end
+    def vhost;    @conn.options.fetch(:vhost);    end
+    def port;     @conn.options.fetch(:port);     end
+    def ssl?;     @conn.options.fetch(:ssl);      end
+    
+    attr_accessor :protocol_timeout
+    
+    def max_channels
+      @conn.options.fetch(:max_channels)
+    end
+    
+    def max_frame_size
+      @conn.options.fetch(:max_frame_size)
     end
     
     # Send a request on the given channel with the given type and properties.
