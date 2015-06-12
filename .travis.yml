@@ -1,6 +1,7 @@
 before_install:
-  - "if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y rabbitmq-server && sudo /usr/sbin/rabbitmq-server -detached; fi"
-  - "if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install rabbitmq && sudo /usr/local/sbin/rabbitmq-server -detached; fi"
+  - "sudo apt-get update"
+  - "sudo apt-get install -y rabbitmq-server"
+  - "sudo /usr/sbin/rabbitmq-server -detached"
 
 before_script:
   "rake vendor && rake codegen:ffi"
@@ -14,9 +15,6 @@ rvm:
   - 2.1
   - 2.2
   - rbx-2
-os:
-  - linux
-  - osx # Note that Travis is not actually accepting OSX builds right now - http://docs.travis-ci.com/user/multi-os/#We-are-not-currently-accepting-multi-OS-requests
 
 notifications:
   email: false
