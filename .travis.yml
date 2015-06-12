@@ -1,0 +1,18 @@
+before_install:
+  "apt-get install -y rabbitmq-server"
+
+before_script:
+  "rake vendor && rake codegen:ffi"
+script:
+  "rake spec"
+after_script:
+  "rake install"
+
+language: ruby
+rvm:
+  - 2.1
+  - 2.2
+  - rbx-2
+
+notifications:
+  email: false
