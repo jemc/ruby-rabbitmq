@@ -3,10 +3,11 @@ require 'spec_helper'
 
 
 describe RabbitMQ::Channel do
-  let(:subject_class) { RabbitMQ::Channel }
   let(:connection) { RabbitMQ::Connection.new.start }
   let(:id) { 11 }
-  let(:subject) { subject_class.new(connection, id) }
+  let(:subject) { connection.channel(id) }
+  
+  it { should be_a RabbitMQ::Channel }
   
   its(:connection) { should eq connection }
   its(:id)         { should eq id }
@@ -15,24 +16,24 @@ describe RabbitMQ::Channel do
   
   it "cannot be created if the given channel id is already allocated" do
     subject
-    expect { subject_class.new(connection, id) }.to \
+    expect { connection.channel(id) }.to \
       raise_error ArgumentError, /already in use/
-    expect { subject_class.new(connection, id) }.to \
+    expect { connection.channel(id) }.to \
       raise_error ArgumentError, /already in use/
   end
   
   it "cannot be created if the given channel id is too high" do
-    subject_class.new(connection, max_id)
-    expect { subject_class.new(connection, max_id + 1) }.to \
+    connection.channel(max_id)
+    expect { connection.channel(max_id + 1) }.to \
       raise_error ArgumentError, /too high/
   end
   
   describe "release" do
     it "releases the channel to be allocated again" do
       subject.release
-      subject = subject_class.new(connection, id)
+      subject = connection.channel(id)
       subject.release
-      subject = subject_class.new(connection, id)
+      subject = connection.channel(id)
     end
     
     it "can be called several times to no additional effect" do
