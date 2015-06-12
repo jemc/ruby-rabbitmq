@@ -44,9 +44,10 @@ module RabbitMQ
     end
     
     # @see {Client#on_event}
-    def on(*args, &block)
+    def on_event(*args, &block)
       @client.on_event(@id, *args, &block)
     end
+    alias_method :on, :on_event
     
     # @see {Client#run_loop!}
     # The block will be yielded all non-exception events *for any channel*.

@@ -133,7 +133,7 @@ module RabbitMQ
     
     # Open a new channel of communication and return a new {Channel} object
     # with convenience methods for communicating on that channel. The
-    # channel will be automatically closed if the {Channel} instance is
+    # channel will be automatically released if the {Channel} instance is
     # garbage collected, or if the {Client} connection is {#close}d.
     #
     # @param id [Integer,nil] The channel id number to use. If nil or not

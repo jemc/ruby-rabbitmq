@@ -59,6 +59,11 @@ describe RabbitMQ::Channel do
     
     before { subject }
     
+    specify "#on_event" do
+      client.should_receive(:on_event).with(id, *a) { |*,&blk| blk.should eq b; res }
+      subject.on_event(*a, &b).should eq res
+    end
+    
     specify "#on" do
       client.should_receive(:on_event).with(id, *a) { |*,&blk| blk.should eq b; res }
       subject.on(*a, &b).should eq res
