@@ -2,8 +2,18 @@
 require_relative 'client/connection'
 
 module RabbitMQ
+  
+  # A {Client} holds a connection to a RabbitMQ server and has facilities
+  # for sending events to and handling received events from that server.
+  #
+  # A {Client} is not threadsafe; both the {Client} and any {Channel}s linked
+  # to it should not be shared between threads. If they are shared without
+  # appropriate locking mechanisms, the behavior is undefined and might result
+  # in catastrophic process failures like segmentation faults in the underlying
+  # C library. A {Client} can be safely used in a multithreaded application by
+  # only passing control and message data between threads.
+  #
   class Client
-    DEFAULT_PROTOCOL_TIMEOUT = 30 # seconds
     
     # Create a new {Client} instance with the given properties.
     # There are several ways to convey connection info:
@@ -69,6 +79,7 @@ module RabbitMQ
     # By default, this has the value of {DEFAULT_PROTOCOL_TIMEOUT}.
     # When set, it affects operations like {#fetch_response} and {#run_loop!}.
     attr_accessor :protocol_timeout
+    DEFAULT_PROTOCOL_TIMEOUT = 30 # seconds
     
     def user;           @conn.options.fetch(:user);           end
     def password;       @conn.options.fetch(:password);       end
@@ -142,6 +153,7 @@ module RabbitMQ
     #   non-exception event received on any channel. Other handlers or
     #   response fetchings that match the event will still be processed,
     #   as the block does not consume the event or replace the handlers.
+    # @return [undefined] assume no value - reserved for future use.
     #
     def run_loop!(timeout: protocol_timeout, &block)
       timeout = Float(timeout) if timeout
@@ -178,6 +190,7 @@ module RabbitMQ
       Channel.new(self, @conn, id, finalizer)
     end
     
+    # Open the specified channel.
     private def open_channel(id)
       Util.error_check :"opening a new channel",
         @conn.send_method(id, :channel_open)
@@ -185,6 +198,7 @@ module RabbitMQ
       fetch_response(id, :channel_open_ok)
     end
     
+    # Re-open the specified channel after unexpected closure.
     private def reopen_channel(id)
       Util.error_check :"acknowledging server-initated channel closure",
         @conn.send_method(id, :channel_close_ok)
@@ -195,6 +209,7 @@ module RabbitMQ
       fetch_response(id, :channel_open_ok)
     end
     
+    # Verify or choose a channel id number that is available for use.
     private def allocate_channel(id=nil)
       if id
         id = Integer(id)
@@ -215,19 +230,21 @@ module RabbitMQ
       id
     end
     
+    # Release the given channel id to be reused later and clear its handlers.
     private def release_channel(id)
       @open_channels.delete(id)
       @event_handlers.delete(id)
       @released_channels[id] = true
     end
     
+    # Release all channel ids to be reused later.
     private def release_all_channels
       @open_channels.clear
       @event_handlers.clear
       @released_channels.clear
     end
     
-    # Execute the handler for this type of event, if any
+    # Execute the handler for this type of event, if any.
     private def handle_incoming_event(event)
       if (handlers = @event_handlers[event.fetch(:channel)])
         if (handler = (handlers[event.fetch(:method)]))
@@ -266,6 +283,7 @@ module RabbitMQ
       end
     end
     
+    # Internal implementation of the {#run_loop!} method.
     private def fetch_events(timeout=protocol_timeout, start=Time.now)
       @conn.garbage_collect
       
@@ -277,6 +295,7 @@ module RabbitMQ
       end
     end
     
+    # Internal implementation of the {#fetch_response} method.
     private def fetch_response_internal(channel_id, methods, timeout=protocol_timeout, start=Time.now)
       methods.each { |method|
         found = @incoming_events[channel_id].delete(method)
