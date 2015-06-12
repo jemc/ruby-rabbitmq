@@ -1,7 +1,10 @@
 
 module RabbitMQ
-  module Util; end
-  class << Util
+  
+  # Helper functions for this library.
+  # @api private
+  module Util
+    module_function
     
     def const_name(lowercase_name)
       lowercase_name.to_s.gsub(/((?:\A\w)|(?:_\w))/) { |x| x[-1].upcase }
@@ -47,6 +50,6 @@ module RabbitMQ
       
       result.merge(overrides)
     end
-    
   end
+  
 end

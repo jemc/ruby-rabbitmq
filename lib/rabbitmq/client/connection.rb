@@ -4,10 +4,13 @@ require 'socket'
 module RabbitMQ
   class Client
     
+    # Raised when an operation is performed on an alread-destroyed {Client}.
     class DestroyedError < RuntimeError; end
     
+    # Represents a connection to a single RabbitMQ server.
+    # Used internally by the {Client} class.
+    # @api private
     class Connection
-      
       attr_reader :ptr
       attr_reader :options
       

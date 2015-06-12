@@ -3,6 +3,11 @@ require 'ffi'
 
 
 module RabbitMQ
+  
+  # Bindings and wrappers for the native functions and structures exposed by
+  # the librabbitmq C library. This module is for internal use only so that
+  # all dependencies on the implementation of the C library are abstracted.
+  # @api private
   module FFI
     extend ::FFI::Library
     
