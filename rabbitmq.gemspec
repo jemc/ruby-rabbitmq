@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.homepage      = 'https://github.com/jemc/rabbitmq/'
   s.licenses      = 'MIT'
   
-  s.add_dependency 'ffi', '~> 1.9'
+  s.add_dependency 'ffi', '~> 1.9', '>= 1.9.8'
   
   s.add_development_dependency 'bundler',   '~>  1.6'
   s.add_development_dependency 'rake',      '~> 10.3'
