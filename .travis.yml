@@ -1,5 +1,5 @@
 before_install:
-  - "if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y rabbitmq-server && /usr/sbin/rabbitmq-server -detached; fi"
+  - "if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y rabbitmq-server && sudo /usr/sbin/rabbitmq-server -detached; fi"
   - "if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install rabbitmq && sudo /usr/local/sbin/rabbitmq-server -detached; fi"
 
 before_script:
