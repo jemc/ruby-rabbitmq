@@ -250,7 +250,7 @@ describe RabbitMQ::Client do
       end
     end
     
-    context "when given a block handler" do
+    context "with a block registered as an event handler" do
       before do
         subject.on_event(11, :channel_open_ok) do |event|
           bucket << event
@@ -261,7 +261,7 @@ describe RabbitMQ::Client do
       include_examples "handling events"
     end
     
-    context "when given a callable handler" do
+    context "with a callable object registered as an event handler" do
       before do
         subject, bucket = subject(), bucket()
         callable = Object.new
@@ -274,5 +274,75 @@ describe RabbitMQ::Client do
       
       include_examples "handling events"
     end
+    
+    describe "timeout" do
+      def assert_time_elapsed(less_than: nil, greater_than: nil)
+        start = Time.now
+        yield
+      ensure
+        time = Time.now - start
+        time.should be < less_than    if less_than
+        time.should be > greater_than if greater_than
+      end
+      
+      def with_test_timeout(timeout)
+        main = Thread.current
+        Thread.new { sleep timeout; main.raise(RuntimeError, "test timeout") }
+        yield
+      rescue RuntimeError => e
+        e.message.should eq "test timeout"
+      end
+      
+      specify "of zero passed to run_loop!" do
+        assert_time_elapsed less_than: 0.25 do
+          subject.run_loop! timeout: 0 do
+            assert nil, "This block should never be run"
+          end
+        end
+      end
+      
+      specify "of zero passed to fetch_response" do
+        expect {
+          assert_time_elapsed less_than: 0.25 do
+            subject.fetch_response(11, :channel_open_ok, timeout: 0)
+          end
+        }.to raise_error RabbitMQ::FFI::Error::Timeout
+      end
+      
+      specify "of 0.25 passed to run_loop!" do
+        assert_time_elapsed greater_than: 0.25 do
+          subject.run_loop! timeout: 0.25 do
+            assert nil, "This block should never be run"
+          end
+        end
+      end
+      
+      specify "of 0.25 passed to fetch_response" do
+        expect {
+          assert_time_elapsed greater_than: 0.25 do
+            subject.fetch_response(11, :channel_open_ok, timeout: 0.25)
+          end
+        }.to raise_error RabbitMQ::FFI::Error::Timeout
+      end
+      
+      specify "of nil passed to run_loop!" do
+        with_test_timeout 0.25 do
+          assert_time_elapsed greater_than: 0.2 do
+            subject.run_loop! timeout: nil do
+              assert nil, "This block should never be run"
+            end
+          end
+        end
+      end
+      
+      specify "of nil passed to fetch_response" do
+        with_test_timeout 0.25 do
+          assert_time_elapsed greater_than: 0.2 do
+            subject.fetch_response(11, :channel_open_ok, timeout: nil)
+          end
+        end
+      end
+    end
+    
   end
 end

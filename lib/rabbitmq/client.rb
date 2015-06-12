@@ -33,22 +33,19 @@ module RabbitMQ
       self
     end
     
-    def user;     @conn.options.fetch(:user);     end
-    def password; @conn.options.fetch(:password); end
-    def host;     @conn.options.fetch(:host);     end
-    def vhost;    @conn.options.fetch(:vhost);    end
-    def port;     @conn.options.fetch(:port);     end
-    def ssl?;     @conn.options.fetch(:ssl);      end
-    
+    # The timeout to use when waiting for protocol events, in seconds.
+    # By default, this has the value of {DEFAULT_PROTOCOL_TIMEOUT}.
+    # When set, it affects operations like {#fetch_response} and {#run_loop!}.
     attr_accessor :protocol_timeout
     
-    def max_channels
-      @conn.options.fetch(:max_channels)
-    end
-    
-    def max_frame_size
-      @conn.options.fetch(:max_frame_size)
-    end
+    def user;           @conn.options.fetch(:user);           end
+    def password;       @conn.options.fetch(:password);       end
+    def host;           @conn.options.fetch(:host);           end
+    def vhost;          @conn.options.fetch(:vhost);          end
+    def port;           @conn.options.fetch(:port);           end
+    def ssl?;           @conn.options.fetch(:ssl);            end
+    def max_channels;   @conn.options.fetch(:max_channels);   end
+    def max_frame_size; @conn.options.fetch(:max_frame_size); end
     
     # Send a request on the given channel with the given type and properties.
     #
@@ -77,9 +74,10 @@ module RabbitMQ
     # @raise [RabbitMQ::FFI::Error] if a library exception occurs.
     # @return [Hash] the response data received.
     #
-    def fetch_response(channel_id, method, timeout=protocol_timeout)
+    def fetch_response(channel_id, method, timeout: protocol_timeout)
       methods = Array(method).map(&:to_sym)
-      fetch_response_internal(Integer(channel_id), methods, Float(timeout))
+      timeout = Float(timeout) if timeout
+      fetch_response_internal(Integer(channel_id), methods, timeout)
     end
     
     # Register a handler for events on the given channel of the given type.
@@ -107,13 +105,13 @@ module RabbitMQ
     # an event handler, or until the given timeout duration has elapsed.
     #
     # @param timeout [Float] the maximum time to run the loop, in seconds;
-    #   if none is given, the loop will block indefinitely or until {#break!}
+    #   if none is given, the value is {#protocol_timeout} or until {#break!}
     # @param block [Proc,nil] if given, the block will be yielded each
     #   non-exception event received on any channel. Other handlers or
     #   response fetchings that match the event will still be processed,
     #   as the block does not consume the event or replace the handlers.
     #
-    def run_loop!(timeout: nil, &block)
+    def run_loop!(timeout: protocol_timeout, &block)
       timeout = Float(timeout) if timeout
       @breaking = false
       fetch_events(timeout, &block)
