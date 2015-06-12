@@ -33,6 +33,16 @@ module RabbitMQ
       self
     end
     
+    # @see {Client#send_request}
+    def send_request(*args)
+      @client.send_request(@id, *args)
+    end
+    
+    # @see {Client#fetch_response}
+    def fetch_response(*args)
+      @client.fetch_response(@id, *args)
+    end
+    
     # @see {Client#on_event}
     def on(*args, &block)
       @client.on_event(@id, *args, &block)

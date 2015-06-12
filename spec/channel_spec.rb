@@ -52,6 +52,39 @@ describe RabbitMQ::Channel do
     end
   end
   
+  describe "delegating methods" do
+    let(:a) { [1,2,3] }
+    let(:b) { Proc.new { } }
+    let(:res) { 88 }
+    
+    before { subject }
+    
+    specify "#on" do
+      client.should_receive(:on_event).with(id, *a) { |*,&blk| blk.should eq b; res }
+      subject.on(*a, &b).should eq res
+    end
+    
+    specify "#send_request" do
+      client.should_receive(:send_request).with(id, *a) { res }
+      subject.send_request(*a).should eq res
+    end
+    
+    specify "#fetch_response" do
+      client.should_receive(:fetch_response).with(id, *a) { res }
+      subject.fetch_response(*a).should eq res
+    end
+    
+    specify "#run_loop!" do
+      client.should_receive(:run_loop!).with(*a) { res }
+      subject.run_loop!(*a).should eq res
+    end
+    
+    specify "#break!" do
+      client.should_receive(:break!) { res }
+      subject.break!.should eq res
+    end
+  end
+  
   it "can perform exchange operations" do
     res = subject.exchange_delete("my_exchange")
     res[:properties].should be_empty
