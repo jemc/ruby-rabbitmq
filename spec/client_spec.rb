@@ -116,6 +116,7 @@ describe RabbitMQ::Client do
   describe "register_handler" do
     before { subject.start }
     let(:bucket) { [] }
+    let(:other_bucket) { [] }
     
     it "requires a block or callable to be given as the handler" do
       expect { subject.on_event(11, :channel_open_ok) }.to \
@@ -148,6 +149,40 @@ describe RabbitMQ::Client do
         event.fetch(:method).should eq :channel_open_ok
         event.fetch(:channel).should eq 11
         bucket.should be_empty
+      end
+      
+      it "calls the block passed to run_loop! for handler-matching events" do
+        subject.send_request(11, :channel_open)
+        subject.run_loop! do |event|
+          other_bucket << event
+          subject.break!
+        end
+        
+        bucket.should eq other_bucket
+        other_bucket.should_not be_empty
+        event = other_bucket.pop
+        event.fetch(:method).should eq :channel_open_ok
+        event.fetch(:channel).should eq 11
+        other_bucket.should be_empty
+      end
+      
+      it "calls the block passed to run_loop! for non-handler-matching events" do
+        subject.send_request(11, :channel_open)
+        subject.fetch_response(11, :channel_open_ok)
+        bucket.pop
+        
+        subject.send_request(11, :channel_close)
+        subject.run_loop! do |event|
+          other_bucket << event
+          subject.break!
+        end
+        
+        bucket.should be_empty
+        other_bucket.should_not be_empty
+        event = other_bucket.pop
+        event.fetch(:method).should eq :channel_close_ok
+        event.fetch(:channel).should eq 11
+        other_bucket.should be_empty
       end
       
       it "tolerates unecessary/nonsensical calls to break!" do

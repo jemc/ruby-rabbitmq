@@ -107,10 +107,10 @@ module RabbitMQ
     # @param timeout [Float] the maximum time to run the loop, in seconds;
     #   if none is given, the loop will block indefinitely or until {#break!}.
     #
-    def run_loop!(timeout=nil)
+    def run_loop!(timeout: nil, &block)
       timeout = Float(timeout) if timeout
       @breaking = false
-      fetch_events(timeout)
+      fetch_events(timeout, &block)
       nil
     end
     
@@ -240,6 +240,7 @@ module RabbitMQ
       while (event = @conn.fetch_next_event(timeout, start))
         handle_incoming_event(event)
         store_incoming_event(event)
+        yield event if block_given?
         break if @breaking
       end
     end

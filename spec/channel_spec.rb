@@ -75,8 +75,8 @@ describe RabbitMQ::Channel do
     end
     
     specify "#run_loop!" do
-      client.should_receive(:run_loop!).with(*a) { res }
-      subject.run_loop!(*a).should eq res
+      client.should_receive(:run_loop!).with(*a) { |*,&blk| blk.should eq b; res }
+      subject.run_loop!(*a, &b).should eq res
     end
     
     specify "#break!" do

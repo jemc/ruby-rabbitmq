@@ -49,8 +49,8 @@ module RabbitMQ
     end
     
     # @see {Client#run_loop!}
-    def run_loop!(*args)
-      @client.run_loop!(*args)
+    def run_loop!(*args, &block)
+      @client.run_loop!(*args, &block)
     end
     
     # @see {Client#break!}
