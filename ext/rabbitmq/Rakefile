@@ -20,24 +20,28 @@ def self.file_task(filename, opts, &block)
   end
 end
 
+def cmd(string)
+  fail "Command failed: #{string}" unless system(string)
+end
+
 file_task 'rabbitmq-c.tar.gz', :download_tarball do
   version = "0.6.0"
   release = "https://github.com/alanxz/rabbitmq-c/releases/download/v#{version}/rabbitmq-c-#{version}.tar.gz"
-  system "wget #{release}"
-  system "mv #{File.basename(release)} #{FILES[:download_tarball]}"
+  cmd "wget #{release}"
+  cmd "mv #{File.basename(release)} #{FILES[:download_tarball]}"
 end
 
 file_task 'rabbitmq-c', :download => :download_tarball do
-  system "tar -xf #{FILES[:download_tarball]}"
-  system "mv rabbitmq-c-* #{FILES[:download]}"
+  cmd "tar -xf #{FILES[:download_tarball]}"
+  cmd "mv rabbitmq-c-* #{FILES[:download]}"
 end
 
 file_task 'config.status', :configure => :download do
-  system "bash -c 'cd #{FILES[:download]} && env CFLAGS=-g ./configure'"
-  system "cp #{FILES[:download]}/#{FILES[:configure]} ./"
+  cmd "bash -c 'cd #{FILES[:download]} && env CFLAGS=-g ./configure'"
+  cmd "cp #{FILES[:download]}/#{FILES[:configure]} ./"
 end
 
 file_task "librabbitmq.#{::FFI::Platform::LIBSUFFIX}", :build => :configure do
-  system "bash -c 'cd #{FILES[:download]} && make'"
-  system "cp #{FILES[:download]}/librabbitmq/.libs/#{FILES[:build]} ."
+  cmd "bash -c 'cd #{FILES[:download]} && make'"
+  cmd "cp #{FILES[:download]}/librabbitmq/.libs/#{FILES[:build]} ."
 end
