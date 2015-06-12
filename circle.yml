@@ -1,0 +1,22 @@
+
+machine:
+  ruby:
+    version:
+      2.1.5
+
+dependencies:
+  pre:
+    - rvm-exec 2.1.5 gem install bundler
+    - rvm-exec 2.2.0 gem install bundler
+    - rvm-exec 2.1.5 bundle install
+    - rvm-exec 2.2.0 bundle install
+    - rake vendor
+    - rake codegen:ffi
+
+test:
+  override:
+    - rvm-exec 2.1.5 bundle exec rake
+    - rvm-exec 2.2.0 bundle exec rake
+  post:
+    - rvm-exec 2.1.5 bundle exec rake install
+    - rvm-exec 2.2.0 bundle exec rake install
