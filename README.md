@@ -25,9 +25,9 @@ This library does not provide thread-safe client objects. Multithreaded applicat
 ## Usage
 
 ```bash
-gem install rabbitmq -v 1.0.0-pre
-ruby examples/publish_500.rb
-ruby examples/consume_500.rb
+$ gem install rabbitmq -v 1.0.0-pre
+$ ruby examples/publish_500.rb
+$ ruby examples/consume_500.rb
 ```
 
 ```ruby
