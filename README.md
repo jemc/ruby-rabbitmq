@@ -4,7 +4,7 @@
 [![Gem Version](https://badge.fury.io/rb/rabbitmq.png)](http://badge.fury.io/rb/rabbitmq) 
 [![Join the chat at https://gitter.im/jemc/ruby-rabbitmq](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jemc/ruby-rabbitmq?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-A Ruby RabbitMQ client library based on FFI bindings for [librabbitmq](https://github.com/alanxz/rabbitmq-c).
+A Ruby RabbitMQ client library based on [FFI](https://github.com/ffi/ffi/wiki) bindings for [librabbitmq](https://github.com/alanxz/rabbitmq-c).
 
 ## Design Goals
 
