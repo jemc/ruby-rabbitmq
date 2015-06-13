@@ -300,8 +300,6 @@ module RabbitMQ
     
     # Internal implementation of the {#run_loop!} method.
     private def fetch_events(timeout=protocol_timeout, start=Time.now)
-      @conn.garbage_collect
-      
       while (event = @conn.fetch_next_event(timeout, start))
         handle_incoming_event(event)
         store_incoming_event(event)
@@ -316,8 +314,6 @@ module RabbitMQ
         found = @incoming_events[channel_id].delete(method)
         return found if found
       }
-      
-      @conn.garbage_collect_channel(channel_id)
       
       while (event = @conn.fetch_next_event(timeout, start))
         handle_incoming_event(event)

@@ -137,6 +137,8 @@ module RabbitMQ
       # Fetch the next one or more frames to form the next discrete event,
       # returning the event as a Hash, or nil if time expired.
       def fetch_next_event(timeout=0, start=Time.now)
+        garbage_collect
+        
         frame = fetch_next_frame(timeout, start)
         return unless frame
         event = frame.as_method_to_h(false)
