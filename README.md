@@ -24,6 +24,8 @@ This library does not provide thread-safe client objects. Multithreaded applicat
 
 ## Usage
 
+To use this library effectively, it is necessary to understand the possibilities and idioms of RabbitMQ. Users are encouraged to familiarize themselves with the [AMQP protocol reference documentation](http://www.rabbitmq.com/amqp-0-9-1-reference.html).
+
 ```bash
 $ gem install rabbitmq -v 1.0.0-pre
 $ ruby examples/publish_500.rb
