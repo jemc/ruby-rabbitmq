@@ -1,10 +1,28 @@
 
 require 'rspec/core/rake_task'
 
-task :default => :test
+task :default => :spec
 
-# RSpec tests
-RSpec::Core::RakeTask.new :test
+task :vendor => :"vendor:build"
+namespace :vendor do
+  task :build do
+    system "cd ext/rabbitmq && rake build"
+  end
+  
+  task :clean do
+    system "cd ext/rabbitmq && rake clean"
+  end
+end
+
+task :codegen => :"codegen:ffi"
+namespace :codegen do
+  task :ffi do
+    require_relative 'codegen/ffi'
+  end
+end
+
+RSpec::Core::RakeTask.new :spec => [:vendor, :codegen]
+task :test => :spec
 
 task :build do
   system "rm -f *.gem"
@@ -21,18 +39,4 @@ end
 task :gp => :release
 task :release => :install do
   system "gem push pkg/*.gem"
-end
-
-task :vendor do
-  system "cd ext/rabbitmq && rake --trace"
-end
-
-task :vendor_clean do
-  system "cd ext/rabbitmq && rake clean"
-end
-
-namespace :codegen do
-  task :ffi do
-    require_relative 'codegen/ffi'
-  end
 end
