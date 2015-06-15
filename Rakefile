@@ -16,7 +16,7 @@ end
 
 task :codegen => :"codegen:ffi"
 namespace :codegen do
-  task :ffi do
+  task :ffi => :vendor do
     require_relative 'codegen/ffi'
   end
 end
