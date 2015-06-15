@@ -24,7 +24,7 @@ end
 RSpec::Core::RakeTask.new :spec => [:vendor, :codegen]
 task :test => :spec
 
-task :build do
+task :build => :codegen do
   system "rm -f *.gem"
   system "rm -rf pkg && mkdir pkg"
   system "gem build *.gemspec"
