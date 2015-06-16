@@ -20,3 +20,5 @@ test:
   post:
     - rvm-exec 2.1.5 bundle exec rake install
     - rvm-exec 2.2.0 bundle exec rake install
+    - ruby example/publish_500.rb
+    - ruby example/consume_500.rb
