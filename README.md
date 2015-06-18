@@ -6,7 +6,7 @@
 
 A Ruby [RabbitMQ](https://www.rabbitmq.com/features.html) client library based on [FFI](https://github.com/ffi/ffi/wiki) bindings for [librabbitmq](https://github.com/alanxz/rabbitmq-c).
 
-##### `$ gem install rabbitmq -v 1.0.0-pre`
+##### `$ gem install rabbitmq`
 
 ## Design Goals
 
