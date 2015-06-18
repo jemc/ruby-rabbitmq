@@ -103,15 +103,19 @@ module RabbitMQ
         @server_properties = FFI::Table.new(FFI.amqp_get_server_properties(@ptr)).to_h
       end
       
+      # Calculate the amount of the timeout remaining from the given start time
+      def remaining_timeout(timeout=0, start=Time.now)
+        return nil unless timeout
+        timeout = timeout - (Time.now - start)
+        timeout < 0 ? 0 : timeout
+      end
+      
       # Block until there is readable data on the internal ruby socket,
       # returning true if there is readable data, or false if time expired.
       def select(timeout=0, start=Time.now)
-        if timeout
-          timeout = timeout - (start-Time.now)
-          timeout = 0 if timeout < 0
-        end
-        
-        IO.select([@ruby_socket], [], [], timeout) ? true : false
+        IO.select([@ruby_socket], [], [],
+          remaining_timeout(timeout, start)
+        ) ? true : false
       end
       
       # Return the next available frame, or nil if time expired.

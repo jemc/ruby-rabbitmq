@@ -79,4 +79,22 @@ describe RabbitMQ::Client::Connection do
     subject.options[:ssl]     .should eq false
   end
   
+  describe "remaining_timeout" do
+    it "returns nil when given a timeout of nil" do
+      subject.remaining_timeout(nil).should eq nil
+    end
+    
+    it "returns 0 when time has already run out" do
+      time_now = Time.now
+      subject.remaining_timeout(0,   time_now)      .should eq 0
+      subject.remaining_timeout(5.0, time_now - 5)  .should eq 0
+      subject.remaining_timeout(5.0, time_now - 10) .should eq 0
+      subject.remaining_timeout(5.0, time_now - 100).should eq 0
+    end
+    
+    it "returns the remaining time when there is time remaining" do
+      subject.remaining_timeout(10.0, Time.now-5).should be_within(1.0).of(5.0)
+    end
+  end
+  
 end
