@@ -3,7 +3,7 @@ module RabbitMQ
   module FFI
     
     class Error < RuntimeError
-      def initialize message=nil
+      def initialize(message=nil)
         @message = message
       end
       

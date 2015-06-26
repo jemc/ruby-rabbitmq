@@ -10,30 +10,30 @@ module RabbitMQ
       lowercase_name.to_s.gsub(/((?:\A\w)|(?:_\w))/) { |x| x[-1].upcase }
     end
     
-    def error_check action, status
+    def error_check(action, status)
       return if status == :ok
       raise RabbitMQ::FFI::Error.lookup(status), "while #{action}"
     end
     
-    def null_check action, obj
+    def null_check(action, obj)
       return unless obj.nil?
       raise RabbitMQ::FFI::Error, "while #{action} - got unexpected null"
     end
     
-    def mem_ptr size, count: 1, clear: true, release: true
+    def mem_ptr(size, count: 1, clear: true, release: true)
       ptr = ::FFI::MemoryPointer.new(size, count, clear)
       ptr.autorelease = false unless release
       ptr
     end
     
-    def strdup_ptr str, **kwargs
+    def strdup_ptr(str, **kwargs)
       str = str + "\x00"
       ptr = mem_ptr(str.bytesize, **kwargs)
       ptr.write_string(str)
       ptr
     end
     
-    def connection_info url=nil, **overrides
+    def connection_info(url=nil, **overrides)
       info = FFI::ConnectionInfo.new
       FFI.amqp_default_connection_info(info)
       result = info.to_h
