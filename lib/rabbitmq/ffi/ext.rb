@@ -4,6 +4,7 @@ require_relative 'ext/bytes'
 
 require_relative 'ext/connection_info'
 require_relative 'ext/field_value'
+require_relative 'ext/array'
 require_relative 'ext/table'
 
 require_relative 'ext/method'

@@ -274,4 +274,47 @@ describe RabbitMQ::Channel do
     subject.queue_delete("my_queue")
   end
   
+  it "can send and receive messages with custom headers" do
+    subject.queue_delete("my_queue")
+    subject.queue_declare("my_queue")
+    time = Time.now
+    
+    res = subject.basic_publish("message_body", "", "my_queue",
+      headers: { "x-my-header" => [
+        {
+          "foo" => 88,
+          "bar" => 88.8,
+          "baz" => "string1",
+          "time" => (time + 1),
+          "bool" => true
+        },
+        {
+          "foo" => 99,
+          "bar" => 99.9,
+          "baz" => "string2",
+          "time" => (time - 1),
+          "bool" => false
+        },
+      ]}
+    )
+    res.should eq true
+    
+    res = subject.basic_get("my_queue", no_ack: true)
+    headers = res[:header][:headers]
+    headers.should be_a Hash
+    headers["x-my-header"][0]["foo"].should eq 88
+    headers["x-my-header"][1]["foo"].should eq 99
+    headers["x-my-header"][0]["bar"].should eq 88.8
+    headers["x-my-header"][1]["bar"].should eq 99.9
+    headers["x-my-header"][0]["baz"].should eq "string1"
+    headers["x-my-header"][1]["baz"].should eq "string2"
+    headers["x-my-header"][0]["time"].to_i.should eq((time + 1).to_i)
+    headers["x-my-header"][1]["time"].to_i.should eq((time - 1).to_i)
+    headers["x-my-header"][0]["bool"].should eq true
+    headers["x-my-header"][1]["bool"].should eq false
+    
+    res = subject.basic_get("my_queue", no_ack: true)
+    res.has_key?(:header).should_not be
+  end
+  
 end
