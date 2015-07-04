@@ -23,7 +23,7 @@ module RabbitMQ
       end
       
       def free!
-        self.each do
+        self.each do |entry|
           entry[:key].free!
           entry[:value].free!
         end
