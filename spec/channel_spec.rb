@@ -317,4 +317,23 @@ describe RabbitMQ::Channel do
     res.has_key?(:header).should_not be
   end
   
+  it "can work with publish confirms" do
+    res = subject.confirm_select
+    res[:properties].should be_empty
+    
+    subject.queue_delete("my_queue")
+    subject.queue_declare("my_queue")
+    
+    messages = 100.times.map { |i| "message_#{i}" }
+    messages.each do |message|
+      res = subject.basic_publish(message, "", "my_queue")
+      res.should eq true
+    end
+    
+    loop do
+      res = subject.fetch_confirm
+      fail unless res.fetch(:method) == :basic_ack
+      break if res.fetch(:properties).fetch(:delivery_tag) == 100
+    end
+  end
 end

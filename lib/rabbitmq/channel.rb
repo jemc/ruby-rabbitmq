@@ -223,6 +223,18 @@ module RabbitMQ
     end
     
     ##
+    # Confirm mode operations
+    
+    def confirm_select
+      send_request :confirm_select
+      fetch_response :confirm_select_ok
+    end
+    
+    def fetch_confirm
+      fetch_response [:basic_ack, :basic_nack, :basic_reject]
+    end
+    
+    ##
     # Message operations
     
     def basic_get(queue, **opts)
