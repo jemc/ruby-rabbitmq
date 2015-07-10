@@ -3,12 +3,12 @@ Gem::Specification.new do |s|
   s.name          = 'rabbitmq'
   s.version       = '1.1.0'
   s.date          = '2015-07-18'
-  s.summary       = "rabbitmq"
-  s.description   = "A Ruby RabbitMQ client library based on FFI bindings for librabbitmq."
-  s.authors       = ["Joe McIlvain"]
+  s.summary       = 'rabbitmq'
+  s.description   = 'A Ruby RabbitMQ client library based on FFI bindings for librabbitmq.'
+  s.authors       = ['Joe McIlvain']
   s.email         = 'joe.eli.mac@gmail.com'
   
-  s.files         = Dir["{lib}/**/*.rb", "bin/*", "LICENSE", "*.md"]
+  s.files         = Dir['{lib}/**/*.rb', 'bin/*', 'LICENSE', '*.md']
   s.extensions    = ['ext/rabbitmq/Rakefile']
   
   s.require_path  = 'lib'
