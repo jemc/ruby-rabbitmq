@@ -1,19 +1,19 @@
 
 Gem::Specification.new do |s|
-  s.name          = 'rabbitmq'
-  s.version       = '1.1.0'
-  s.date          = '2015-07-18'
-  s.summary       = 'rabbitmq'
-  s.description   = 'A Ruby RabbitMQ client library based on FFI bindings for librabbitmq.'
-  s.authors       = ['Joe McIlvain']
-  s.email         = 'joe.eli.mac@gmail.com'
+  s.name         = 'rabbitmq'
+  s.version      = '1.1.0'
+  s.date         = '2015-07-18'
+  s.summary      = 'rabbitmq'
+  s.description  = 'A Ruby RabbitMQ client library based on FFI bindings for librabbitmq.'
+  s.authors      = ['Joe McIlvain']
+  s.email        = 'joe.eli.mac@gmail.com'
   
-  s.files         = Dir['{lib}/**/*.rb', 'bin/*', 'LICENSE', '*.md']
-  s.extensions    = ['ext/rabbitmq/Rakefile']
+  s.files        = Dir['{lib}/**/*.rb', 'bin/*', 'LICENSE', '*.md']
+  s.extensions   = ['ext/rabbitmq/Rakefile']
   
-  s.require_path  = 'lib'
-  s.homepage      = 'https://github.com/jemc/ruby-rabbitmq'
-  s.licenses      = 'MIT'
+  s.require_path = 'lib'
+  s.homepage     = 'https://github.com/jemc/ruby-rabbitmq'
+  s.licenses     = 'MIT'
   
   s.add_dependency 'ffi', '~> 1.9', '>= 1.9.8'
   
