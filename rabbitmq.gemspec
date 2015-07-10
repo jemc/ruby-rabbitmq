@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.extensions    = ['ext/rabbitmq/Rakefile']
   
   s.require_path  = 'lib'
-  s.homepage      = 'https://github.com/jemc/rabbitmq/'
+  s.homepage      = 'https://github.com/jemc/ruby-rabbitmq'
   s.licenses      = 'MIT'
   
   s.add_dependency 'ffi', '~> 1.9', '>= 1.9.8'
