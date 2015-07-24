@@ -37,11 +37,11 @@ file_task 'rabbitmq-c', :download => :download_tarball do
 end
 
 file_task 'config.status', :configure => :download do
-  cmd "bash -c 'cd #{FILES[:download]} && ./configure'"
+  cmd "/usr/bin/env sh -c 'cd #{FILES[:download]} && ./configure'"
   cmd "cp #{FILES[:download]}/#{FILES[:configure]} ./"
 end
 
 file_task "librabbitmq.#{::FFI::Platform::LIBSUFFIX}", :build => :configure do
-  cmd "bash -c 'cd #{FILES[:download]} && make'"
+  cmd "/usr/bin/env sh -c 'cd #{FILES[:download]} && make'"
   cmd "cp #{FILES[:download]}/librabbitmq/.libs/#{FILES[:build]} ."
 end
