@@ -32,7 +32,7 @@ file_task 'rabbitmq-c.tar.gz', :download_tarball do
 end
 
 file_task 'rabbitmq-c', :download => :download_tarball do
-  cmd "tar -xf #{FILES[:download_tarball]}"
+  cmd "tar -zxf #{FILES[:download_tarball]}"
   cmd "mv rabbitmq-c-* #{FILES[:download]}"
 end
 
