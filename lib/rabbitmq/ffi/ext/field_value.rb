@@ -17,7 +17,7 @@ module RabbitMQ
         result = case kind
         when :bytes;     value.to_s(free)
         when :utf8;      value.to_s(free).force_encoding(Encoding::UTF_8)
-        when :timestamp; Time.at(value / 1000.0)
+        when :timestamp; Time.at(value).utc
         when :table;     value.to_h(free)
         when :array;     value.to_a(free)
         else value
@@ -42,7 +42,7 @@ module RabbitMQ
         when ::Hash;   [:table, FieldValueValue.new(Table.from(value).pointer)]
         when ::Fixnum; [:i64,       (v=FieldValueValue.new; v[:i64]=value; v)]
         when ::Float;  [:f64,       (v=FieldValueValue.new; v[:f64]=value; v)]
-        when ::Time;   [:timestamp, (v=FieldValueValue.new; v[:u64]=value.to_i*1000; v)]
+        when ::Time;   [:timestamp, (v=FieldValueValue.new; v[:u64]=value.to_i; v)]
         when true;     [:boolean,   (v=FieldValueValue.new; v[:boolean]=true; v)]
         when false;    [:boolean,   (v=FieldValueValue.new; v[:boolean]=false; v)]
         else raise NotImplementedError, "#{self.class}.from(#<#{value.class}>)"
