@@ -6,6 +6,7 @@ module RabbitMQ
       def to_s(free=false)
         size = self[:len]
         s = size == 0 ? "" : self[:bytes].read_bytes(size)
+        s.force_encoding(Encoding::ASCII_8BIT)
         free! if free
         s
       end

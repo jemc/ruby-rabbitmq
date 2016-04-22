@@ -152,7 +152,7 @@ module RabbitMQ
         return unless frame
         event.merge!(frame.as_header_to_h)
         
-        body = ""
+        body = "".force_encoding(Encoding::ASCII_8BIT)
         while body.size < event.fetch(:body_size)
           frame = fetch_next_frame(timeout, start)
           return unless frame

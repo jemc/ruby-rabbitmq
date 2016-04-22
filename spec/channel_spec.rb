@@ -206,6 +206,7 @@ describe RabbitMQ::Channel do
     res[:properties].should be_empty
     res[:header].should be_a Hash
     res[:body].should eq "message_body"
+    res[:body].encoding.should eq Encoding::ASCII_8BIT
     
     res = subject.basic_get("my_queue", no_ack: true)
     res[:method].should eq :basic_get_empty
