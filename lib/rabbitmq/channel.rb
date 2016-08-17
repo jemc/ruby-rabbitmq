@@ -94,6 +94,7 @@ module RabbitMQ
         durable:     opts.fetch(:durable,     false),
         auto_delete: opts.fetch(:auto_delete, false),
         internal:    opts.fetch(:internal,    false),
+        arguments:   opts.fetch(:arguments,   {})
       }
       fetch_response :exchange_declare_ok
     end
