@@ -1,7 +1,7 @@
 
 Gem::Specification.new do |s|
   s.name         = 'rabbitmq'
-  s.version      = '1.1.6'
+  s.version      = '1.1.7'
   s.date         = '2016-08-17'
   s.summary      = 'rabbitmq'
   s.description  = 'A Ruby RabbitMQ client library based on FFI bindings for librabbitmq.'
