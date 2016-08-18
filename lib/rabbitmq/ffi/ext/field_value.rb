@@ -36,8 +36,8 @@ module RabbitMQ
       
       def apply(value)
         self[:kind], self[:value] = case value
-        when ::String; [:bytes, FieldValueValue.new(Bytes.from_s(value).pointer)]
-        when ::Symbol; [:bytes, FieldValueValue.new(Bytes.from_s(value.to_s).pointer)]
+        when ::String; [:utf8,  FieldValueValue.new(Bytes.from_s(value.encode(Encoding::UTF_8)).pointer)]
+        when ::Symbol; [:utf8,  FieldValueValue.new(Bytes.from_s(value.to_s.encode!(Encoding::UTF_8)).pointer)]
         when ::Array;  [:array, FieldValueValue.new(Array.from_a(value).pointer)]
         when ::Hash;   [:table, FieldValueValue.new(Table.from(value).pointer)]
         when ::Fixnum; [:i64,       (v=FieldValueValue.new; v[:i64]=value; v)]
