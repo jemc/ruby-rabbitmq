@@ -9,7 +9,7 @@ sleep_time  = 0.1 # time in seconds to sleep in between each batch
 
 publisher = RabbitMQ::Client.new.start.channel
 queue     = "memory_queue"
-exchange  = "" # default exchange
+exchange  = RabbitMQ::DEFAULT_EXCHANGE
 publisher.queue_declare(queue)
 
 while true

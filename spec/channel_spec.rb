@@ -192,15 +192,15 @@ describe RabbitMQ::Channel do
     subject.queue_delete("my_queue")
     subject.queue_declare("my_queue")
     
-    res = subject.basic_publish("message_body", "", "my_queue",
-                                persistent: true, priority: 5)
+    res = subject.basic_publish("message_body", RabbitMQ::DEFAULT_EXCHANGE,
+                                "my_queue", persistent: true, priority: 5)
     res.should eq true
     
     res = subject.basic_get("my_queue", no_ack: true)
     res[:method].should eq :basic_get_ok
     res[:properties].delete(:delivery_tag) .should be_an Integer
     res[:properties].delete(:redelivered)  .should eq false
-    res[:properties].delete(:exchange)     .should eq ""
+    res[:properties].delete(:exchange)     .should eq RabbitMQ::DEFAULT_EXCHANGE
     res[:properties].delete(:routing_key)  .should eq "my_queue"
     res[:properties].delete(:message_count).should eq 0
     res[:properties].should be_empty
@@ -222,7 +222,7 @@ describe RabbitMQ::Channel do
     
     # Publish some messages to the queue
     10.times do |i|
-      subject.basic_publish("message_#{i}", "", "my_queue")
+      subject.basic_publish("message_#{i}", RabbitMQ::DEFAULT_EXCHANGE, "my_queue")
     end
     
     # Negotiate this channel as a consumer of the queue
@@ -240,7 +240,7 @@ describe RabbitMQ::Channel do
       
       res[:method].should eq :basic_deliver
       res[:properties].delete(:redelivered).should eq false
-      res[:properties].delete(:exchange)   .should eq ""
+      res[:properties].delete(:exchange)   .should eq RabbitMQ::DEFAULT_EXCHANGE
       res[:properties].delete(:routing_key).should eq "my_queue"
       res[:properties].should be_empty
       res[:header].should be_a Hash
