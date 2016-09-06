@@ -2,23 +2,19 @@
 machine:
   ruby:
     version:
-      2.1.5
+      2.2.0
 
 dependencies:
   pre:
-    - rvm-exec 2.1.5 gem install bundler
-    - rvm-exec 2.2.0 gem install bundler
-    - rvm-exec 2.1.5 bundle install
-    - rvm-exec 2.2.0 bundle install
+    - gem install bundler
+    - bundle install
     - rake vendor
     - rake codegen:ffi
 
 test:
   override:
-    - rvm-exec 2.1.5 bundle exec rake
-    - rvm-exec 2.2.0 bundle exec rake
+    - bundle exec rake
   post:
-    - rvm-exec 2.1.5 bundle exec rake install
-    - rvm-exec 2.2.0 bundle exec rake install
+    - bundle exec rake install
     - ruby -I./lib example/publish_500.rb
     - ruby -I./lib example/consume_500.rb
