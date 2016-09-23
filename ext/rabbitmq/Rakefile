@@ -25,7 +25,7 @@ def cmd(string)
 end
 
 file_task 'rabbitmq-c.tar.gz', :download_tarball do
-  version = "0.6.0"
+  version = "0.8.0"
   release = "https://github.com/alanxz/rabbitmq-c/releases/download/v#{version}/rabbitmq-c-#{version}.tar.gz"
   cmd "wget #{release}"
   cmd "mv #{File.basename(release)} #{FILES[:download_tarball]}"

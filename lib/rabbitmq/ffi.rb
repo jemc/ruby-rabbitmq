@@ -28,31 +28,33 @@ module RabbitMQ
     attach_function :amqp_version,        [], :string, **opts
     
     Status = enum ::FFI::TypeDefs[:int], [
-      :ok,                          0x0,
-      :no_memory,                  -0x0001,
-      :bad_amqp_data,              -0x0002,
-      :unknown_class,              -0x0003,
-      :unknown_method,             -0x0004,
-      :hostname_resolution_failed, -0x0005,
-      :incompatible_amqp_version,  -0x0006,
-      :connection_closed,          -0x0007,
-      :bad_url,                    -0x0008,
-      :socket_error,               -0x0009,
-      :invalid_parameter,          -0x000A,
-      :table_too_big,              -0x000B,
-      :wrong_method,               -0x000C,
-      :timeout,                    -0x000D,
-      :timer_failure,              -0x000E,
-      :heartbeat_timeout,          -0x000F,
-      :unexpected_state,           -0x0010,
-      :unexpected_socket_closed,   -0x0011,
-      :unexpected_socket_inuse,    -0x0012,
-      :tcp_error,                  -0x0100,
-      :tcp_socketlib_init_error,   -0x0101,
-      :ssl_error,                  -0x0200,
-      :ssl_hostname_verify_failed, -0x0201,
-      :ssl_peer_verify_failed,     -0x0202,
-      :ssl_connection_failed,      -0x0203,
+      :ok,                              0x0,
+      :no_memory,                      -0x0001,
+      :bad_amqp_data,                  -0x0002,
+      :unknown_class,                  -0x0003,
+      :unknown_method,                 -0x0004,
+      :hostname_resolution_failed,     -0x0005,
+      :incompatible_amqp_version,      -0x0006,
+      :connection_closed,              -0x0007,
+      :bad_url,                        -0x0008,
+      :socket_error,                   -0x0009,
+      :invalid_parameter,              -0x000A,
+      :table_too_big,                  -0x000B,
+      :wrong_method,                   -0x000C,
+      :timeout,                        -0x000D,
+      :timer_failure,                  -0x000E,
+      :heartbeat_timeout,              -0x000F,
+      :unexpected_state,               -0x0010,
+      :unexpected_socket_closed,       -0x0011,
+      :unexpected_socket_inuse,        -0x0012,
+      :broker_unsupported_sasl_method, -0x0013,
+      :status_unsupported,             -0x0014,
+      :tcp_error,                      -0x0100,
+      :tcp_socketlib_init_error,       -0x0101,
+      :ssl_error,                      -0x0200,
+      :ssl_hostname_verify_failed,     -0x0201,
+      :ssl_peer_verify_failed,         -0x0202,
+      :ssl_connection_failed,          -0x0203,
     ]
     
     DeliveryMode = enum ::FFI::TypeDefs[:uint8], [
@@ -280,7 +282,9 @@ module RabbitMQ
     end
     
     SaslMethod = enum [
-      :plain, 0,
+      :undefined, -1,
+      :plain,      0,
+      :external,   1,
     ]
     
     ConnectionState = :pointer
@@ -487,6 +491,7 @@ module RabbitMQ
     attach_function :amqp_socket_get_sockfd,       [:pointer],                             :int,     **opts
     attach_function :amqp_get_socket,              [ConnectionState],                      :pointer, **opts
     attach_function :amqp_get_server_properties,   [ConnectionState],                      Table,    **opts
+    attach_function :amqp_get_client_properties,   [ConnectionState],                      Table,    **opts
     
     attach_function :amqp_tcp_socket_new,        [ConnectionState], :pointer, **opts
     attach_function :amqp_tcp_socket_set_sockfd, [:pointer, :int],  :void,    **opts
