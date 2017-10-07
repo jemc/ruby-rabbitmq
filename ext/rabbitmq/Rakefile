@@ -1,4 +1,3 @@
-
 require 'rake/clean'
 require 'ffi'
 
@@ -8,11 +7,11 @@ task :default => [:build, :compact]
 
 def self.file_task(filename, opts, &block)
   name, dep = opts.is_a?(Hash) ? opts.to_a.first : [opts, nil]
-  
+
   FILES[name] = filename
   CLEAN.include filename
   task name => filename
-  
+
   if dep
     file filename => FILES[dep], &block
   else
@@ -27,7 +26,11 @@ end
 file_task 'rabbitmq-c.tar.gz', :download_tarball do
   version = "0.6.0"
   release = "https://github.com/alanxz/rabbitmq-c/releases/download/v#{version}/rabbitmq-c-#{version}.tar.gz"
-  cmd "wget #{release}"
+  if %w[which wget] == 0
+    cmd "wget #{release}"
+  else
+    cmd "curl -O -L #{release}"
+  end
   cmd "mv #{File.basename(release)} #{FILES[:download_tarball]}"
 end
 
