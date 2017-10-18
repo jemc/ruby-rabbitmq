@@ -108,5 +108,18 @@ describe RabbitMQ::Util do
         ssl:      true
       )
     end
+
+    it "given a URL with trailing slash parses URL correctly" do
+      subject.connection_info(
+        "amqp://user:password@host:1234/",
+      ).should eq(
+        user:     "user",
+        password: "password",
+        host:     "host",
+        vhost:    "/",
+        port:     1234,
+        ssl:      false
+      )
+    end
   end
 end

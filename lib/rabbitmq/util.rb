@@ -39,6 +39,7 @@ module RabbitMQ
       result = info.to_h
       
       if url
+        url = url.chomp("/") # RabbitMQ library doesn't handle trailing slashes correctly
         url_ptr = Util.strdup_ptr(url)
         Util.error_check :"parsing connection URL",
           FFI.amqp_parse_url(url_ptr, info)
