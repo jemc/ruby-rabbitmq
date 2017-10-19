@@ -40,7 +40,7 @@ module RabbitMQ
         when ::Symbol; [:utf8,  FieldValueValue.new(Bytes.from_s(value.to_s.encode!(Encoding::UTF_8)).pointer)]
         when ::Array;  [:array, FieldValueValue.new(Array.from_a(value).pointer)]
         when ::Hash;   [:table, FieldValueValue.new(Table.from(value).pointer)]
-        when ::Fixnum; [:i64,       (v=FieldValueValue.new; v[:i64]=value; v)]
+        when ::Integer;[:i64,       (v=FieldValueValue.new; v[:i64]=value; v)]
         when ::Float;  [:f64,       (v=FieldValueValue.new; v[:f64]=value; v)]
         when ::Time;   [:timestamp, (v=FieldValueValue.new; v[:u64]=value.to_i; v)]
         when true;     [:boolean,   (v=FieldValueValue.new; v[:boolean]=true; v)]
