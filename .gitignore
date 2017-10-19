@@ -3,7 +3,4 @@ Gemfile.lock
 ext/rabbitmq/rabbitmq-c.tar.gz
 ext/rabbitmq/rabbitmq-c
 ext/rabbitmq/config.status
-ext/rabbitmq/librabbitmq.so
-ext/rabbitmq/librabbitmq.dylib
-lib/rabbitmq/ffi/gen
-lib/rabbitmq/ffi/gen.rb
+ext/rabbitmq/librabbitmq.*

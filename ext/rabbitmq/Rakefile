@@ -1,8 +1,12 @@
 require 'rake/clean'
-require 'ffi'
 
 FILES = {}
 
+LIBSUFFIX = case RUBY_PLATFORM
+            when /darwin/ then "dylib"
+            when /windows|cygwin/ then "ddl"
+            else "so"
+            end
 task :default => [:build, :compact]
 
 def self.file_task(filename, opts, &block)
@@ -24,7 +28,7 @@ def cmd(string)
 end
 
 file_task 'rabbitmq-c.tar.gz', :download_tarball do
-  version = "0.6.0"
+  version = "0.8.0"
   release = "https://github.com/alanxz/rabbitmq-c/releases/download/v#{version}/rabbitmq-c-#{version}.tar.gz"
   if %w[which wget] == 0
     cmd "wget #{release}"
@@ -44,7 +48,7 @@ file_task 'config.status', :configure => :download do
   cmd "cp #{FILES[:download]}/#{FILES[:configure]} ./"
 end
 
-file_task "librabbitmq.#{::FFI::Platform::LIBSUFFIX}", :build => :configure do
+file_task "librabbitmq.#{LIBSUFFIX}", :build => :configure do
   cmd "/usr/bin/env sh -c 'cd #{FILES[:download]} && make'"
   cmd "cp #{FILES[:download]}/librabbitmq/.libs/#{FILES[:build]} ."
 end
